@@ -1,56 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>数据详情</h2>
-        <a href="{% url 'data_list' %}" class="btn btn-secondary">返回列表</a>
-    </div>
-    
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">{{ metric.date }} 的健身数据</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <table class="table table-borderless">
-                        <tr>
-                            <th width="30%">日期：</th>
-                            <td>{{ metric.date }}</td>
-                        </tr>
-                        <tr>
-                            <th>体重：</th>
-                            <td>{{ metric.weight }} kg</td>
-                        </tr>
-                        <tr>
-                            <th>步数：</th>
-                            <td>{{ metric.steps|default:"未记录" }}</td>
-                        </tr>
-                        <tr>
-                            <th>卡路里：</th>
-                            <td>{{ metric.calories|default:"未记录" }}</td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <!-- 可以添加图表或其他可视化内容 -->
-                    <div class="alert alert-info">
-                        <strong>记录ID：</strong> {{ metric.id }}<br>
-                        <strong>用户：</strong> {{ metric.user.username }}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-footer">
-            <small class="text-muted">
-                记录时间：{{ metric.date }}
-            </small>
-        </div>
-    </div>
-    
-    <div class="mt-4">
-        <a href="{% url 'add_metric' %}" class="btn btn-primary">添加新记录</a>
-        <a href="{% url 'dashboard' %}" class="btn btn-info">查看趋势图</a>
-    </div>
-</div>
+<h2>Record Detail</h2>
+
+<table>
+  <tr><th width="30%">Date</th><td>{{ metric.date }}</td></tr>
+  <tr><th>Weight</th><td>{{ metric.weight }} kg</td></tr>
+  <tr><th>Steps</th><td>{{ metric.steps|default_if_none:"" }}</td></tr>
+  <tr><th>Calories</th><td>{{ metric.calories|default_if_none:"" }}</td></tr>
+  <tr><th>User</th><td>{{ metric.user.username }}</td></tr>
+</table>
+
+<p style="margin-top:12px">
+  <a href="{% url 'data_list' %}">Back to List</a>
+  <span style="margin:0 8px">|</span>
+  <a href="{% url 'dashboard' %}">Open Dashboard</a>
+</p>
 {% endblock %}

@@ -1,4 +1,7 @@
-.\env\Scripts\Activate.ps1
+D:\python\fittrack-env\Scripts\Activate.ps1
+
+
+						.\env\Scripts\Activate.ps1
 
 & "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -h 127.0.0.1 -u root -p
 

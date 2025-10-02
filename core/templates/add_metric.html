@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Add Daily Data</h2>
+
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}
   <button type="submit">Save</button>
+  <a href="{% url 'data_list' %}" style="margin-left:8px">View Data List</a>
 </form>
 {% endblock %}

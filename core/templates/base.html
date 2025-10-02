@@ -1,27 +1,44 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>FitTrack+</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>nav a{margin-right:12px;} .msg{margin:10px 0}</style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:980px;margin:20px auto;padding:0 16px;}
+    nav a{margin-right:14px;text-decoration:none;color:#0366d6}
+    nav a.active{font-weight:700}
+    .msgs{margin:12px 0}
+    .ok{color:#11773a}.err{color:#c00}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #ddd;padding:8px}
+    th{background:#f7f7f7;text-align:left}
+    form.inline>*{margin-right:8px}
+  </style>
 </head>
 <body>
+
   <nav>
-    <a href="/">Home</a>
-    <a href="/add-metric/">Add Data</a>
-    <a href="/import-csv/">Import CSV</a>
-    <a href="/dashboard/">Dashboard</a>
-    <a href="/admin/">Admin</a>
+    <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+    <a href="{% url 'add_metric' %}" class="{% if request.resolver_match.url_name == 'add_metric' %}active{% endif %}">Add Data</a>
+    <a href="{% url 'import_csv' %}" class="{% if request.resolver_match.url_name == 'import_csv' %}active{% endif %}">Import CSV</a>
+    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="{% url 'data_list' %}" class="{% if request.resolver_match.url_name in 'data_list data_detail' %}active{% endif %}">Data List</a>
+    <a href="{% url 'data_stats' %}" class="{% if request.resolver_match.url_name == 'data_stats' %}active{% endif %}">Stats</a>
+    <span style="float:right">Signed in: {{ request.user.username }}</span>
   </nav>
-  <div class="msg">
+
+
+  <div class="msgs">
     {% if messages %}
       {% for m in messages %}
-        <div style="color:{% if m.tags == 'success' %}green{% else %}red{% endif %}">{{ m }}</div>
+        <div class="{% if 'success' in m.tags %}ok{% else %}err{% endif %}">{{ m }}</div>
       {% endfor %}
     {% endif %}
   </div>
-  <hr>
+
+  <hr />
   {% block content %}{% endblock %}
 </body>
 </html>
