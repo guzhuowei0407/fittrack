@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">数据统计</h2>
+    
+    <div class="row">
+        <!-- 基础统计 -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">总体统计</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>总记录数：</th>
+                            <td><span class="badge bg-info">{{ stats.total_records|default:0 }}</span></td>
+                        </tr>
+                        <tr>
+                            <th>平均体重：</th>
+                            <td>{{ stats.avg_weight|floatformat:1|default:"--" }} kg</td>
+                        </tr>
+                        <tr>
+                            <th>最高体重：</th>
+                            <td>{{ stats.max_weight|default:"--" }} kg</td>
+                        </tr>
+                        <tr>
+                            <th>最低体重：</th>
+                            <td>{{ stats.min_weight|default:"--" }} kg</td>
+                        </tr>
+                        <tr>
+                            <th>平均步数：</th>
+                            <td>{{ stats.avg_steps|floatformat:0|default:"--" }}</td>
+                        </tr>
+                        <tr>
+                            <th>最高步数：</th>
+                            <td>{{ stats.max_steps|default:"--" }}</td>
+                        </tr>
+                        <tr>
+                            <th>平均卡路里：</th>
+                            <td>{{ stats.avg_calories|floatformat:0|default:"--" }}</td>
+                        </tr>
+                        <tr>
+                            <th>最高卡路里：</th>
+                            <td>{{ stats.max_calories|default:"--" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 最近30天统计 -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">最近30天统计</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>记录数：</th>
+                            <td><span class="badge bg-success">{{ recent_stats.recent_records|default:0 }}</span></td>
+                        </tr>
+                        <tr>
+                            <th>平均体重：</th>
+                            <td>{{ recent_stats.recent_avg_weight|floatformat:1|default:"--" }} kg</td>
+                        </tr>
+                        <tr>
+                            <th>平均步数：</th>
+                            <td>{{ recent_stats.recent_avg_steps|floatformat:0|default:"--" }}</td>
+                        </tr>
+                        <tr>
+                            <th>平均卡路里：</th>
+                            <td>{{ recent_stats.recent_avg_calories|floatformat:0|default:"--" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- 记录范围 -->
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">记录范围</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if first_record %}
+                            <div class="alert alert-light">
+                                <strong>最早记录：</strong><br>
+                                日期：{{ first_record.date }}<br>
+                                体重：{{ first_record.weight }} kg
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {% if latest_record %}
+                            <div class="alert alert-light">
+                                <strong>最新记录：</strong><br>
+                                日期：{{ latest_record.date }}<br>
+                                体重：{{ latest_record.weight }} kg
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <a href="{% url 'data_list' %}" class="btn btn-primary">查看所有记录</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-info">查看趋势图</a>
+        <a href="{% url 'add_metric' %}" class="btn btn-success">添加新记录</a>
+    </div>
+</div>
+{% endblock %}

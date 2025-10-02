@@ -1,0 +1,21 @@
+.\env\Scripts\Activate.ps1
+
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -h 127.0.0.1 -u root -p
+
+python manage.py runserver
+
+
+
+
+http://127.0.0.1:8000/
+
+http://127.0.0.1:8000/admin/login/
+
+
+demo
+demo12345
+
+
+
+kotori
+zqa123

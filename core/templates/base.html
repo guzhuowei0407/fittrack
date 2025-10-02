@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <title>FitTrack+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>nav a{margin-right:12px;} .msg{margin:10px 0}</style>
+</head>
+<body>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/add-metric/">Add Data</a>
+    <a href="/import-csv/">Import CSV</a>
+    <a href="/dashboard/">Dashboard</a>
+    <a href="/admin/">Admin</a>
+  </nav>
+  <div class="msg">
+    {% if messages %}
+      {% for m in messages %}
+        <div style="color:{% if m.tags == 'success' %}green{% else %}red{% endif %}">{{ m }}</div>
+      {% endfor %}
+    {% endif %}
+  </div>
+  <hr>
+  {% block content %}{% endblock %}
+</body>
+</html>

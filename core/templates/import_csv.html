@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Import CSV</h2>
+<p>CSV header: <code>date,weight,steps,calories</code></p>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Upload</button>
+</form>
+{% endblock %}
