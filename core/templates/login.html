@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Sign in</h2>
+
+<form method="post" style="max-width:420px">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Log in</button>
+</form>
+
+<p style="margin-top:10px;color:#666">
+  Tip: You can also sign in via <a href="/admin/login/">Admin login</a>.
+</p>
+{% endblock %}

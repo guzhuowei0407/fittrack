@@ -6,15 +6,18 @@ from django.core.paginator import Paginator
 from django.db.models import Avg, Max, Min, Count
 from datetime import datetime, timedelta
 import csv, io
+import json
 
 from .forms import DailyMetricForm, UploadFileForm
 from .models import DailyMetric
 
-@login_required(login_url='/admin/login/')
+from django.contrib.auth.decorators import login_required
+@login_required
 def home(request):
     return redirect('dashboard')
 
-@login_required(login_url='/admin/login/')
+from django.contrib.auth.decorators import login_required
+@login_required
 def add_metric(request):
     if request.method == 'POST':
         form = DailyMetricForm(request.POST)
@@ -28,7 +31,8 @@ def add_metric(request):
         form = DailyMetricForm()
     return render(request, 'add_metric.html', {'form': form})
 
-@login_required(login_url='/admin/login/')
+from django.contrib.auth.decorators import login_required
+@login_required
 def import_csv(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -56,34 +60,39 @@ def import_csv(request):
         form = UploadFileForm()
     return render(request, 'import_csv.html', {'form': form})
 
-@login_required(login_url='/admin/login/')
+from django.contrib.auth.decorators import login_required
+@login_required
 def dashboard(request):
-    # Last 30 days
-    end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=30)
-    qs = DailyMetric.objects.filter(user=request.user, date__gte=start_date, date__lte=end_date).order_by('date')
+    # 最近 30 天（date 类型，匹配模型的 DateField）
+    end = datetime.today().date()
+    start = end - timedelta(days=30)
 
-    dates = [m.date.strftime("%Y-%m-%d") for m in qs]
-    weights = [m.weight for m in qs]
+    qs = (DailyMetric.objects
+          .filter(user=request.user, date__range=(start, end))
+          .order_by('date'))
+
+    labels = [m.date.isoformat() for m in qs]
+    weights = [float(m.weight) for m in qs]
 
     def ma(arr, w):
         out = []
         for i in range(len(arr)):
-            if i < w-1:
-                out.append(None)
+            if i < w - 1:
+                out.append(None)  # JSON 中是 null，Chart.js 会跳过
             else:
                 out.append(round(sum(arr[i-w+1:i+1]) / w, 2))
         return out
 
-    data = {
-        'dates': dates,
-        'weights': weights,
-        'ma7': ma(weights, 7),
-        'ma30': ma(weights, 30),
+    ctx = {
+        "labels_json": json.dumps(labels),
+        "weights_json": json.dumps(weights),
+        "ma7_json": json.dumps(ma(weights, 7)),
+        "ma30_json": json.dumps(ma(weights, 30)),
     }
-    return render(request, 'dashboard.html', data)
+    return render(request, "dashboard.html", ctx)
 
-@login_required(login_url='/admin/login/')
+from django.contrib.auth.decorators import login_required
+@login_required
 def data_list(request):
     """显示用户所有健身数据记录，支持分页和排序"""
     order_by = request.GET.get('order_by', '-date')  # 默认按日期倒序
@@ -114,13 +123,15 @@ def data_list(request):
     }
     return render(request, 'data_list.html', context)
 
-@login_required(login_url='/admin/login/')  
+from django.contrib.auth.decorators import login_required
+@login_required 
 def data_detail(request, pk):
     """查看单条记录详情"""
     metric = get_object_or_404(DailyMetric, pk=pk, user=request.user)
     return render(request, 'data_detail.html', {'metric': metric})
 
-@login_required(login_url='/admin/login/')
+from django.contrib.auth.decorators import login_required
+@login_required
 def data_stats(request):
     """数据统计视图"""
     # 基础统计

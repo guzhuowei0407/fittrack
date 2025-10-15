@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>FitTrack+</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <!-- 轻量样式：统一导航/消息区域/表格观感（可按需调整） -->
   <style>
     body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:980px;margin:20px auto;padding:0 16px;}
     nav a{margin-right:14px;text-decoration:none;color:#0366d6}
@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-
+  <!-- 顶部导航：左侧为业务菜单，右侧为登录/退出（依赖 request 上下文） -->
   <nav>
     <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
     <a href="{% url 'add_metric' %}" class="{% if request.resolver_match.url_name == 'add_metric' %}active{% endif %}">Add Data</a>
@@ -26,10 +26,30 @@
     <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a>
     <a href="{% url 'data_list' %}" class="{% if request.resolver_match.url_name in 'data_list data_detail' %}active{% endif %}">Data List</a>
     <a href="{% url 'data_stats' %}" class="{% if request.resolver_match.url_name == 'data_stats' %}active{% endif %}">Stats</a>
-    <span style="float:right">Signed in: {{ request.user.username }}</span>
+
+    <!-- 右侧：登录/退出。已登录显示用户名与“Log out”；未登录显示“Log in”。staff 用户附带 Admin 入口。 -->
+    <span style="float:right">
+      {% if request.user.is_authenticated %}
+        Signed in: {{ request.user.username }}
+        &nbsp;|&nbsp;
+        <!-- 退出用 POST 更安全；需要 CSRF -->
+        <form method="post" action="{% url 'logout' %}" style="display:inline">
+          {% csrf_token %}
+          <button type="submit"
+                  style="border:none;background:none;color:#0366d6;cursor:pointer;padding:0;">
+            Log out
+          </button>
+        </form>
+        {% if request.user.is_staff %}
+          &nbsp;|&nbsp;<a href="/admin/">Admin</a> <!-- 仅 staff 可见，便于你进入后台 -->
+        {% endif %}
+      {% else %}
+        <a href="{% url 'login' %}">Log in</a>
+      {% endif %}
+    </span>
   </nav>
 
-
+  <!-- 消息提示：复用 Django messages 框架 -->
   <div class="msgs">
     {% if messages %}
       {% for m in messages %}
@@ -39,6 +59,7 @@
   </div>
 
   <hr />
+  <!-- 子页面内容插槽 -->
   {% block content %}{% endblock %}
 </body>
 </html>

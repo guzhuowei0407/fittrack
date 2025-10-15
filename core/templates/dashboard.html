@@ -1,30 +1,62 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>Weight Trend (Last 30 Days)</h2>
+
+<!-- 画布 -->
 <canvas id="weightChart" width="900" height="360"></canvas>
 
-
+<!-- 先加载 Chart.js，再执行绘图脚本 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
+/* 后端提供的 JSON 字符串，直接当 JS 对象使用（已在 views 中 json.dumps + |safe） */
+const labels  = {{ labels_json|safe }};
+const weights = {{ weights_json|safe }};
+const ma7     = {{ ma7_json|safe }};
+const ma30    = {{ ma30_json|safe }};
 
-const labels = {{ dates|safe }};
-const weights = {{ weights|safe }};
-const ma7 = {{ ma7|safe }};
-const ma30 = {{ ma30|safe }};
+/* 如果数组为空，给出简单提示（可选） */
+if (!weights || weights.length === 0) {
+  console.warn("No data for last 30 days. Add data or import CSV, then refresh.");
+}
 
-new Chart(document.getElementById('weightChart').getContext('2d'), {
+/* 画图 */
+const ctx = document.getElementById('weightChart').getContext('2d');
+new Chart(ctx, {
   type: 'line',
   data: {
     labels,
     datasets: [
-      {label:'Weight (kg)', data:weights, borderColor:'rgba(75,192,192,1)', backgroundColor:'rgba(75,192,192,0.15)', tension:0.2},
-      {label:'7-Day MA', data:ma7, borderColor:'orange', spanGaps:true},
-      {label:'30-Day MA', data:ma30, borderColor:'red', spanGaps:true},
+      {
+        label: 'Weight (kg)',
+        data: weights,
+        borderColor: 'rgba(75,192,192,1)',
+        backgroundColor: 'rgba(75,192,192,0.15)',
+        tension: 0.2,
+        pointRadius: 2
+      },
+      {
+        label: '7-Day MA',
+        data: ma7,
+        borderColor: 'orange',
+        spanGaps: true,
+        pointRadius: 0
+      },
+      {
+        label: '30-Day MA',
+        data: ma30,
+        borderColor: 'red',
+        spanGaps: true,
+        pointRadius: 0
+      }
     ]
   },
   options: {
-    interaction:{mode:'index',intersect:false},
-    scales:{y:{beginAtZero:false, title:{display:true,text:'Weight (kg)'}}}
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { display: true } },
+    scales: {
+      x: { title: { display: true, text: 'Date' } },
+      y: { title: { display: true, text: 'Weight (kg)' }, beginAtZero: false }
+    }
   }
 });
 </script>
