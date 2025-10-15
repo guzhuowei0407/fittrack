@@ -31,7 +31,23 @@
         <td>{{ m.weight }}</td>
         <td>{{ m.steps|default_if_none:"" }}</td>
         <td>{{ m.calories|default_if_none:"" }}</td>
-        <td><a href="{% url 'data_detail' m.pk %}">Detail</a></td>
+        <td>
+          <a href="{% url 'data_detail' m.pk %}">Detail</a>
+          <span style="margin:0 6px;">|</span>
+          <!-- Delete uses POST + CSRF; confirm dialog to avoid mistakes -->
+          <form method="post"
+                action="{% url 'data_delete' m.pk %}"
+                style="display:inline"
+                onsubmit="return confirm('Delete this record?');">
+            {% csrf_token %}
+            <!-- Send current list URL back so we can return to the same page/filters after deletion -->
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit"
+                    style="border:none;background:none;color:#0366d6;cursor:pointer;padding:0;">
+              Delete
+            </button>
+          </form>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -49,7 +65,6 @@
     {% endif %}
   </div>
 {% else %}
-
   <div class="msgs ok">No records yet. <a href="{% url 'add_metric' %}">Add the first one</a>.</div>
 {% endif %}
 {% endblock %}

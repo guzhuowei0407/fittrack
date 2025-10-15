@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Avg, Max, Min, Count
 from datetime import datetime, timedelta
+from django.urls import reverse
 import csv, io
 import json
 
@@ -171,3 +172,23 @@ def data_stats(request):
         'latest_record': latest_record,
     }
     return render(request, 'data_stats.html', context)
+
+@login_required
+def data_delete(request, pk):
+    """
+    删除单条 DailyMetric 记录（仅限当前登录用户自己的数据）
+    - GET: 可选地返回确认页（本实现直接在列表中确认，不单独渲染）
+    - POST: 执行删除并回到列表页，保留原分页/排序/筛选参数
+    """
+    metric = get_object_or_404(DailyMetric, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        metric.delete()
+        messages.success(request, "Record deleted.")
+        # 尽量返回删除前的列表位置
+        next_url = request.POST.get("next") or reverse("data_list")
+        return redirect(next_url)
+
+    # 如果你想做单独确认页，可在此渲染模板：
+    # return render(request, "data_delete_confirm.html", {"metric": metric})
+    return redirect("data_list")

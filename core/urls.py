@@ -9,5 +9,6 @@ urlpatterns = [
     path('import-csv/', views.import_csv, name='import_csv'),
     path('data/', views.data_list, name='data_list'),
     path('data/<int:pk>/', views.data_detail, name='data_detail'),
+    path('data/<int:pk>/delete/', views.data_delete, name='data_delete'),
     path('stats/', views.data_stats, name='data_stats'),
 ]
