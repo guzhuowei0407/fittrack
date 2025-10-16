@@ -18,6 +18,8 @@ http://127.0.0.1:8000/admin/login/
 demo
 demo12345
 
+qwerty123
+Poiuyt123
 
 
 kotori

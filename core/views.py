@@ -80,10 +80,10 @@ def dashboard(request):
     def ma(arr, w):
         out = []
         for i in range(len(arr)):
-            if i < w - 1:
-                out.append(None)  # JSON 中是 null，Chart.js 会跳过
-            else:
-                out.append(round(sum(arr[i-w+1:i+1]) / w, 2))
+            # 取最近 w 个点（含当前）
+            start = max(0, i - w + 1)
+            window = arr[start:i + 1]
+            out.append(round(sum(window) / len(window), 2))
         return out
 
     ctx = {
