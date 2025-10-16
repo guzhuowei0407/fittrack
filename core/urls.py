@@ -11,4 +11,5 @@ urlpatterns = [
     path('data/<int:pk>/', views.data_detail, name='data_detail'),
     path('data/<int:pk>/delete/', views.data_delete, name='data_delete'),
     path('stats/', views.data_stats, name='data_stats'),
+    path('signup/', views.signup, name='signup'),
 ]

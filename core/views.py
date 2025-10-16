@@ -6,6 +6,8 @@ from django.core.paginator import Paginator
 from django.db.models import Avg, Max, Min, Count
 from datetime import datetime, timedelta
 from django.urls import reverse
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 import csv, io
 import json
 
@@ -192,3 +194,20 @@ def data_delete(request, pk):
     # 如果你想做单独确认页，可在此渲染模板：
     # return render(request, "data_delete_confirm.html", {"metric": metric})
     return redirect("data_list")
+
+def signup(request):
+    """
+    用户注册（前台），成功后自动登录并进入 Dashboard
+    """
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            # 创建用户
+            user = form.save()
+            # 自动登录
+            login(request, user)
+            messages.success(request, "Account created. Welcome!")
+            return redirect('dashboard')
+    else:
+        form = UserCreationForm()
+    return render(request, 'signup.html', {'form': form})

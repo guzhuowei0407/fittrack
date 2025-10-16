@@ -32,7 +32,7 @@
       {% if request.user.is_authenticated %}
         Signed in: {{ request.user.username }}
         &nbsp;|&nbsp;
-        <!-- 退出用 POST 更安全；需要 CSRF -->
+        <!-- 退出用 POST，更安全；需要 CSRF -->
         <form method="post" action="{% url 'logout' %}" style="display:inline">
           {% csrf_token %}
           <button type="submit"
@@ -41,12 +41,15 @@
           </button>
         </form>
         {% if request.user.is_staff %}
-          &nbsp;|&nbsp;<a href="/admin/">Admin</a> <!-- 仅 staff 可见，便于你进入后台 -->
+          &nbsp;|&nbsp;<a href="/admin/">Admin</a>
         {% endif %}
       {% else %}
         <a href="{% url 'login' %}">Log in</a>
+        &nbsp;|&nbsp;
+        <a href="{% url 'signup' %}">Sign up</a>
       {% endif %}
     </span>
+    <!-- ↑↑↑ 就是把这段放在 <span style="float:right">...</span> 里 ↑↑↑ -->
   </nav>
 
   <!-- 消息提示：复用 Django messages 框架 -->
