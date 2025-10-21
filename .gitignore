@@ -1,0 +1,10 @@
+# Python 虚拟环境目录
+venv/
+
+# 编译的 Python 文件
+__pycache__/
+*.pyc
+*.pyd
+
+# Mac 系统文件
+.DS_Store

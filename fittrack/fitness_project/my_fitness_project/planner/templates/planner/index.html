@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 健身计划生成器</title>
+    <style>
+        /* 这里是一些简单的样式，让页面更好看 */
+        body { font-family: sans-serif; background-color: #f4f4f9; color: #333; margin: 20px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        .generate-button { display: block; width: 100%; padding: 15px; font-size: 18px; color: #fff; background-color: #007bff; border: none; cursor: pointer; margin-bottom: 20px; }
+        #result-box { width: 98%; min-height: 400px; margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #fafafa; white-space: pre-wrap; /* 这个样式可以保留AI回答的换行和空格 */ }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your personal AI fitness planner</h1>
+        <p>Click the button below to generate a customized 4-week fitness and diet plan based on your preset information.</p>
+
+        <form method="post">
+            {% csrf_token %} <button type="submit" class="generate-button">Generate my own plan</button>
+        </form>
+
+        {% if result %}
+            <h2>Your plan has been generated!</h2>
+            <textarea id="result-box" readonly>{{ result }}</textarea>
+        {% endif %}
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>
