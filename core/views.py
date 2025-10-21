@@ -66,7 +66,6 @@ def import_csv(request):
 from django.contrib.auth.decorators import login_required
 @login_required
 def dashboard(request):
-    # 最近 30 天（date 类型，匹配模型的 DateField）
     end = datetime.today().date()
     start = end - timedelta(days=30)
 
@@ -80,7 +79,6 @@ def dashboard(request):
     def ma(arr, w):
         out = []
         for i in range(len(arr)):
-            # 取最近 w 个点（含当前）
             start = max(0, i - w + 1)
             window = arr[start:i + 1]
             out.append(round(sum(window) / len(window), 2))
@@ -98,24 +96,20 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def data_list(request):
     """显示用户所有健身数据记录，支持分页和排序"""
-    order_by = request.GET.get('order_by', '-date')  # 默认按日期倒序
+    order_by = request.GET.get('order_by', '-date') 
     search_date = request.GET.get('search_date', '')
     
-    # 基础查询
     queryset = DailyMetric.objects.filter(user=request.user)
     
-    # 日期搜索
     if search_date:
         queryset = queryset.filter(date=search_date)
     
-    # 排序
     if order_by in ['date', '-date', 'weight', '-weight', 'steps', '-steps', 'calories', '-calories']:
         queryset = queryset.order_by(order_by)
     else:
         queryset = queryset.order_by('-date')
     
-    # 分页
-    paginator = Paginator(queryset, 10)  # 每页显示10条记录
+    paginator = Paginator(queryset, 10) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -129,15 +123,14 @@ def data_list(request):
 from django.contrib.auth.decorators import login_required
 @login_required 
 def data_detail(request, pk):
-    """查看单条记录详情"""
+    """View the details of a single record"""
     metric = get_object_or_404(DailyMetric, pk=pk, user=request.user)
     return render(request, 'data_detail.html', {'metric': metric})
 
 from django.contrib.auth.decorators import login_required
 @login_required
 def data_stats(request):
-    """数据统计视图"""
-    # 基础统计
+    """Statistics View"""
     stats = DailyMetric.objects.filter(user=request.user).aggregate(
         total_records=Count('id'),
         avg_weight=Avg('weight'),
@@ -149,7 +142,6 @@ def data_stats(request):
         max_calories=Max('calories'),
     )
     
-    # 最近30天统计
     end_date = datetime.today().date()
     start_date = end_date - timedelta(days=30)
     recent_stats = DailyMetric.objects.filter(
@@ -163,7 +155,6 @@ def data_stats(request):
         recent_avg_calories=Avg('calories'),
     )
     
-    # 最早和最新记录
     first_record = DailyMetric.objects.filter(user=request.user).order_by('date').first()
     latest_record = DailyMetric.objects.filter(user=request.user).order_by('-date').first()
     
@@ -178,33 +169,28 @@ def data_stats(request):
 @login_required
 def data_delete(request, pk):
     """
-    删除单条 DailyMetric 记录（仅限当前登录用户自己的数据）
-    - GET: 可选地返回确认页（本实现直接在列表中确认，不单独渲染）
-    - POST: 执行删除并回到列表页，保留原分页/排序/筛选参数
+    Delete a single DailyMetric record (only for the currently logged-in user's own data)
+    - GET: Optionally returns a confirmation page (this implementation confirms directly in the list, not separately rendered)
+    - POST: Executes the deletion and returns to the list page, preserving the original paging/sorting/filtering parameters
     """
     metric = get_object_or_404(DailyMetric, pk=pk, user=request.user)
 
     if request.method == "POST":
         metric.delete()
         messages.success(request, "Record deleted.")
-        # 尽量返回删除前的列表位置
         next_url = request.POST.get("next") or reverse("data_list")
         return redirect(next_url)
 
-    # 如果你想做单独确认页，可在此渲染模板：
-    # return render(request, "data_delete_confirm.html", {"metric": metric})
     return redirect("data_list")
 
 def signup(request):
     """
-    用户注册（前台），成功后自动登录并进入 Dashboard
+    User registration (front desk), automatically logs in and enters Dashboard after success
     """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            # 创建用户
             user = form.save()
-            # 自动登录
             login(request, user)
             messages.success(request, "Account created. Welcome!")
             return redirect('dashboard')

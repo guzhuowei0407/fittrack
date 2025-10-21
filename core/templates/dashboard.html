@@ -2,24 +2,19 @@
 {% block content %}
 <h2>Weight Trend (Last 30 Days)</h2>
 
-<!-- 画布 -->
 <canvas id="weightChart" width="900" height="360"></canvas>
 
-<!-- 先加载 Chart.js，再执行绘图脚本 -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-/* 后端提供的 JSON 字符串，直接当 JS 对象使用（已在 views 中 json.dumps + |safe） */
 const labels  = {{ labels_json|safe }};
 const weights = {{ weights_json|safe }};
 const ma7     = {{ ma7_json|safe }};
 const ma30    = {{ ma30_json|safe }};
 
-/* 如果数组为空，给出简单提示（可选） */
 if (!weights || weights.length === 0) {
   console.warn("No data for last 30 days. Add data or import CSV, then refresh.");
 }
 
-/* 画图 */
 const ctx = document.getElementById('weightChart').getContext('2d');
 new Chart(ctx, {
   type: 'line',
