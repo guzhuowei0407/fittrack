@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Login - FitTrack+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card bg-dark bg-opacity-75 text-white shadow">
+                <div class="card-body">
+                    <h3 class="mb-3">Login</h3>
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+                        <button class="btn btn-primary w-100">Sign in</button>
+                        <div class="text-end mt-2">
+                            <a href="{% url 'password_reset' %}" class="link-light">Forgot password?</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center text-white-50 mt-3">
+        <small>Demo account: demo / demo123</small>
+    </div>
+    </div>
+{% endblock %}
+
+

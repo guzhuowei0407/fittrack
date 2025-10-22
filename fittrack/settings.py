@@ -56,7 +56,7 @@ ROOT_URLCONF = 'fittrack.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates', ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,3 +140,5 @@ LOGOUT_REDIRECT_URL = 'home'
 TEMPLATES[0]['OPTIONS']['context_processors'] += [
     'django.template.context_processors.request',
 ]
+
+STATICFILES_DIRS = [BASE_DIR / 'static']

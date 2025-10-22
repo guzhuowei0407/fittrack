@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile - FitTrack+{% endblock %}
+{% block content %}
+<div class="container profile-bg">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            <div class="card profile-card text-white shadow-lg">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="me-4 flex-shrink-0">
+                            {% if form.instance.avatar %}
+                            <img src="{{ form.instance.avatar.url }}" alt="avatar" class="rounded-circle profile-avatar">
+                            {% else %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center profile-avatar placeholder">
+                                <span class="fs-1">👤</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <h2 class="mb-1 fw-bold">{{ request.user.username }}</h2>
+                            <div class="text-white-50">Update your personal profile</div>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Avatar</label>
+                            {{ form.avatar }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Gender</label>
+                            {{ form.gender }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Age</label>
+                            {{ form.age }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Height (cm)</label>
+                            {{ form.height_cm }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Weight (kg)</label>
+                            {{ form.weight_kg }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Fitness level</label>
+                            {{ form.fitness_level }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Primary goal</label>
+                            {{ form.primary_goal_choice }}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary btn-lg">Save changes</button>
+                            <a class="btn btn-outline-light btn-lg" href="{% url 'profile' %}">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

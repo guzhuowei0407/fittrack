@@ -1,9 +1,9 @@
-#core/admin.py
 from django.contrib import admin
-from .models import DailyMetric
+from .models import UserProfile
 
-@admin.register(DailyMetric)
-class DailyMetricAdmin(admin.ModelAdmin):
-    list_display = ('user', 'date', 'weight', 'steps', 'calories')
-    list_filter = ('user',)
-    search_fields = ('user__username',)
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "gender", "age", "height_cm", "weight_kg", "fitness_level", "primary_goal_choice")
+
+# Register your models here.
