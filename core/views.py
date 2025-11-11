@@ -3,8 +3,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import UserProfile, WorkoutSession, ExerciseSet, Exercise
-from .forms import UserProfileForm, WorkoutSessionForm, ExerciseSetForm
+from .models import UserProfile, WorkoutSession, ExerciseSet, Exercise, PasswordResetCode
+from .forms import (
+    UserProfileForm,
+    WorkoutSessionForm,
+    ExerciseSetForm,
+    RegistrationForm,
+    ForgotPasswordForm,
+    ResetPasswordCodeForm,
+)
 from django.views.decorators.cache import never_cache
 # from .ai_planner import generate_fitness_plan_from_profile
 from django.forms import formset_factory
@@ -13,6 +20,10 @@ import json
 import csv
 import io
 from datetime import datetime
+from django.utils import timezone
+from django.conf import settings
+from django.core.mail import send_mail
+import hashlib, secrets, datetime as dt
 
 
 @never_cache
@@ -284,3 +295,77 @@ def ai_planner(request):
         'error': error_text
     })
 
+
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('profile')
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            UserProfile.objects.get_or_create(user=user)
+            messages.success(request, 'Registration successful. You can now sign in.')
+            return redirect('/')
+    else:
+        form = RegistrationForm()
+    return render(request, 'register.html', {'form': form})
+
+
+def forgot_password(request):
+    if request.method == 'POST':
+        form = ForgotPasswordForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                messages.error(request, 'No account with that email.')
+                return redirect('forgot_password')
+            code = f"{secrets.randbelow(1000000):06d}"
+            code_hash = hashlib.sha256(code.encode()).hexdigest()
+            expires = timezone.now() + dt.timedelta(minutes=15)
+            PasswordResetCode.objects.create(user=user, email=email, code_hash=code_hash, expires_at=expires)
+            subject = 'Your FitTrack+ password reset code'
+            body = f"Your verification code is: {code}\nIt expires in 15 minutes."
+            sender = getattr(settings, 'DEFAULT_FROM_EMAIL', '') or getattr(settings, 'EMAIL_HOST_USER', '')
+            try:
+                send_mail(subject, body, sender, [email], fail_silently=False)
+                messages.success(request, 'Verification code sent to your email.')
+            except Exception:
+                messages.error(request, 'Failed to send email. Please contact support.')
+            return redirect('reset_password_code')
+    else:
+        form = ForgotPasswordForm()
+    return render(request, 'forgot_password.html', {'form': form})
+
+
+def reset_password_code(request):
+    if request.method == 'POST':
+        form = ResetPasswordCodeForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            code = form.cleaned_data['code']
+            new1 = form.cleaned_data['new_password1']
+            new2 = form.cleaned_data['new_password2']
+            if new1 != new2:
+                messages.error(request, 'Passwords do not match.')
+                return redirect('reset_password_code')
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                messages.error(request, 'Invalid email.')
+                return redirect('reset_password_code')
+            code_hash = hashlib.sha256(code.encode()).hexdigest()
+            prc = PasswordResetCode.objects.filter(user=user, email=email, code_hash=code_hash, used_at__isnull=True).order_by('-created_at').first()
+            if not prc or not prc.is_valid():
+                messages.error(request, 'Invalid or expired code.')
+                return redirect('reset_password_code')
+            user.set_password(new1)
+            user.save()
+            prc.used_at = timezone.now()
+            prc.save(update_fields=['used_at'])
+            messages.success(request, 'Password reset successful. You can now sign in.')
+            return redirect('/')
+    else:
+        form = ResetPasswordCodeForm()
+    return render(request, 'reset_password_code.html', {'form': form})

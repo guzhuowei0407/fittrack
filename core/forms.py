@@ -1,4 +1,7 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.core.validators import EmailValidator
 from .models import UserProfile, WorkoutSession, ExerciseSet, Exercise
 
 
@@ -61,3 +64,48 @@ class CSVImportForm(forms.Form):
         help_text='Upload a CSV file with your workout data'
     )
 
+
+class RegistrationForm(UserCreationForm):
+    email = forms.EmailField(required=True, validators=[EmailValidator()])
+
+    class Meta:
+        model = User
+        fields = ("username", "email", "password1", "password2")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs.update({
+            "class": "form-control form-control-lg",
+            "placeholder": "Your username",
+        })
+        self.fields["email"].widget.attrs.update({
+            "class": "form-control form-control-lg",
+            "placeholder": "name@email.com",
+        })
+        self.fields["password1"].widget.attrs.update({
+            "class": "form-control",
+            "placeholder": "At least 8 characters",
+            "id": "id_password1",
+        })
+        self.fields["password2"].widget.attrs.update({
+            "class": "form-control",
+            "placeholder": "Re-enter password",
+            "id": "id_password2",
+        })
+
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(required=True, validators=[EmailValidator()])
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].widget.attrs.update({
+            "class": "form-control form-control-lg",
+            "placeholder": "name@email.com",
+        })
+
+
+class ResetPasswordCodeForm(forms.Form):
+    email = forms.EmailField(required=True, validators=[EmailValidator()])
+    code = forms.CharField(max_length=6)
+    new_password1 = forms.CharField(widget=forms.PasswordInput())
+    new_password2 = forms.CharField(widget=forms.PasswordInput())
