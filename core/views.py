@@ -46,22 +46,32 @@ def add_data(request):
             workout.save()
             
             # Create exercise sets
+            exercise_count = 0
             for form in formset:
                 if form.cleaned_data and not form.cleaned_data.get('DELETE'):
-                    exercise_set = form.save(commit=False)
-                    exercise_set.workout = workout
-                    exercise_set.save()
+                    if form.cleaned_data.get('exercise'):  # Only save if exercise is selected
+                        exercise_set = form.save(commit=False)
+                        exercise_set.workout = workout
+                        exercise_set.save()
+                        exercise_count += 1
             
-            messages.success(request, 'Workout data added successfully!')
-            return redirect('dashboard')  # Redirect to dashboard or workout list
+            messages.success(request, f'Workout data added successfully! Added {exercise_count} exercise(s).')
+            return redirect('dashboard')
         else:
+            # Show specific errors
+            if not workout_form.is_valid():
+                for field, errors in workout_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{field}: {error}')
             messages.error(request, 'Please correct the errors below.')
     else:
-        workout_form = WorkoutSessionForm()
+        # Initialize with current time
+        initial_date = timezone.now().strftime('%Y-%m-%dT%H:%M')
+        workout_form = WorkoutSessionForm(initial={'date': initial_date})
         formset = ExerciseSetFormSet()
     
     # Get all exercises for the dropdown
-    exercises = Exercise.objects.all()
+    exercises = Exercise.objects.all().order_by('name')
     
     return render(request, 'add_data.html', {
         'workout_form': workout_form,
@@ -185,8 +195,22 @@ def export_csv(request):
 
 @login_required
 def dashboard(request):
+    from django.db.models import Sum
     # Get user's recent workouts
     recent_workouts = WorkoutSession.objects.filter(user=request.user).order_by('-date')[:10]
+    
+    # Calculate total exercise duration for workouts without duration_minutes
+    for workout in recent_workouts:
+        if not workout.duration_minutes:
+            # Sum all exercise durations in seconds
+            total_seconds = workout.exercise_sets.aggregate(
+                total=Sum('duration_seconds')
+            )['total']
+            if total_seconds:
+                # Convert to minutes and store as attribute
+                workout.calculated_duration = round(total_seconds / 60, 1)
+            else:
+                workout.calculated_duration = None
     
     # Get some basic stats
     total_workouts = WorkoutSession.objects.filter(user=request.user).count()
@@ -198,6 +222,70 @@ def dashboard(request):
         'total_exercises': total_exercises,
     }
     return render(request, 'dashboard.html', context)
+
+
+@login_required
+def export_csv(request):
+    from django.http import HttpResponse
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="my_workout_data.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['date', 'exercise', 'sets', 'reps', 'weight_kg', 'duration_minutes', 'duration_seconds', 'distance_km', 'notes', 'exercise_notes'])
+    
+    # Get all user's exercise sets with workout info
+    exercise_sets = ExerciseSet.objects.filter(workout__user=request.user).select_related('workout', 'exercise').order_by('workout__date')
+    
+    for exercise_set in exercise_sets:
+        writer.writerow([
+            exercise_set.workout.date.strftime('%Y-%m-%d %H:%M:%S'),
+            exercise_set.exercise.name,
+            exercise_set.sets,
+            exercise_set.reps or '',
+            exercise_set.weight_kg or '',
+            exercise_set.workout.duration_minutes or '',
+            exercise_set.duration_seconds or '',
+            exercise_set.distance_km or '',
+            exercise_set.workout.notes or '',
+            exercise_set.notes or ''
+        ])
+    
+    return response
+
+
+@login_required
+def workout_detail(request, workout_id):
+    from django.db.models import Sum
+    workout = get_object_or_404(WorkoutSession, id=workout_id, user=request.user)
+    exercise_sets = workout.exercise_sets.all().select_related('exercise')
+    
+    # Calculate total duration from exercises if not set
+    calculated_duration = None
+    if not workout.duration_minutes:
+        total_seconds = exercise_sets.aggregate(total=Sum('duration_seconds'))['total']
+        if total_seconds:
+            calculated_duration = round(total_seconds / 60, 1)
+    
+    return render(request, 'workout_detail.html', {
+        'workout': workout,
+        'exercise_sets': exercise_sets,
+        'calculated_duration': calculated_duration
+    })
+
+
+@login_required
+def workout_delete(request, workout_id):
+    workout = get_object_or_404(WorkoutSession, id=workout_id, user=request.user)
+    
+    if request.method == 'POST':
+        workout.delete()
+        messages.success(request, 'Workout deleted successfully!')
+        return redirect('dashboard')
+    
+    return render(request, 'workout_confirm_delete.html', {
+        'workout': workout
+    })
 
 
 @login_required

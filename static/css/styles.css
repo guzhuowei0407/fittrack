@@ -192,4 +192,39 @@ label, .form-label, .col-form-label {
     background-color: #0dcaf0 !important;
 }
 
+/* Select dropdown styling */
+.form-control option {
+    background-color: #1a1a1a !important;
+    color: #fff !important;
+}
+
+.form-select {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+}
+
+.form-select:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+}
+
+.form-select option {
+    background-color: #1a1a1a !important;
+    color: #fff !important;
+}
+
+/* Fix for select elements */
+select.form-control {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
+
+select.form-control option {
+    background-color: #1a1a1a !important;
+    color: #fff !important;
+    padding: 8px;
+}
+
 

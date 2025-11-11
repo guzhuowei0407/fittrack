@@ -30,8 +30,9 @@
                             {{ workout_form.date }}
                         </div>
                         <div class="col-md-6">
-                            <label for="{{ workout_form.duration_minutes.id_for_label }}" class="form-label">Duration (minutes)</label>
+                            <label for="{{ workout_form.duration_minutes.id_for_label }}" class="form-label">Duration (minutes) <small class="text-white-50">(optional)</small></label>
                             {{ workout_form.duration_minutes }}
+                            <small class="form-text text-white-50">Leave empty if not tracked</small>
                         </div>
                         <div class="col-12">
                             <label for="{{ workout_form.notes.id_for_label }}" class="form-label">Workout Notes</label>

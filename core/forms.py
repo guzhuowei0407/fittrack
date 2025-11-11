@@ -27,10 +27,11 @@ class WorkoutSessionForm(forms.ModelForm):
             'date': forms.DateTimeInput(attrs={
                 'type': 'datetime-local',
                 'class': 'form-control'
-            }),
+            }, format='%Y-%m-%dT%H:%M'),
             'duration_minutes': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Duration in minutes'
+                'placeholder': 'Duration in minutes',
+                'min': '1'
             }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -38,6 +39,10 @@ class WorkoutSessionForm(forms.ModelForm):
                 'placeholder': 'Workout notes (optional)'
             })
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date'].input_formats = ['%Y-%m-%dT%H:%M']
 
 
 class ExerciseSetForm(forms.ModelForm):

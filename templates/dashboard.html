@@ -66,6 +66,8 @@
                                         <td>
                                             {% if workout.duration_minutes %}
                                                 {{ workout.duration_minutes }} min
+                                            {% elif workout.calculated_duration %}
+                                                <span class="text-info" title="Calculated from exercise durations">~{{ workout.calculated_duration }} min</span>
                                             {% else %}
                                                 --
                                             {% endif %}
@@ -83,7 +85,8 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewWorkout({{ workout.id }})">View</button>
+                                            <a href="{% url 'workout_detail' workout.id %}" class="btn btn-sm btn-outline-info">View</a>
+                                            <a href="{% url 'workout_delete' workout.id %}" class="btn btn-sm btn-outline-danger ms-1">Delete</a>
                                         </td>
                                     </tr>
                                     {% endfor %}

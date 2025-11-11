@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Workout Detail - FitTrack+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-white">Workout Details</h2>
+                <div>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+                    <a href="{% url 'workout_delete' workout.id %}" class="btn btn-outline-danger ms-2">Delete Workout</a>
+                </div>
+            </div>
+
+            <!-- Workout Info Card -->
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-white">Workout Information</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong class="text-white">Date:</strong> <span class="text-white">{{ workout.date }}</span></p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong class="text-white">Duration:</strong> 
+                                <span class="text-white">
+                                    {% if workout.duration_minutes %}
+                                        {{ workout.duration_minutes }} min
+                                    {% elif workout.calculated_duration %}
+                                        <span class="text-info">~{{ workout.calculated_duration }} min</span>
+                                    {% else %}
+                                        Not tracked
+                                    {% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong class="text-white">Total Exercises:</strong> <span class="text-white">{{ workout.exercise_sets.count }}</span></p>
+                        </div>
+                    </div>
+                    {% if workout.notes %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <p><strong class="text-white">Notes:</strong></p>
+                            <p class="text-white">{{ workout.notes }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Exercises Table -->
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <h5 class="card-title text-white">Exercises</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                                <tr>
+                                    <th class="text-white">Exercise</th>
+                                    <th class="text-white">Sets</th>
+                                    <th class="text-white">Reps</th>
+                                    <th class="text-white">Weight (kg)</th>
+                                    <th class="text-white">Duration (sec)</th>
+                                    <th class="text-white">Distance (km)</th>
+                                    <th class="text-white">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exercise_set in workout.exercise_sets.all %}
+                                <tr>
+                                    <td class="text-white">{{ exercise_set.exercise.name }}</td>
+                                    <td class="text-white">{{ exercise_set.sets|default:"-" }}</td>
+                                    <td class="text-white">{{ exercise_set.reps|default:"-" }}</td>
+                                    <td class="text-white">{{ exercise_set.weight_kg|default:"-" }}</td>
+                                    <td class="text-white">{{ exercise_set.duration_seconds|default:"-" }}</td>
+                                    <td class="text-white">{{ exercise_set.distance_km|default:"-" }}</td>
+                                    <td class="text-white">{{ exercise_set.notes|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-white">No exercises recorded</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
