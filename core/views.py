@@ -13,7 +13,7 @@ from .forms import (
     ResetPasswordCodeForm,
 )
 from django.views.decorators.cache import never_cache
-# from .ai_planner import generate_fitness_plan_from_profile
+from .ai_planner import generate_fitness_plan_from_profile
 from django.forms import formset_factory
 from django.http import JsonResponse
 import json
@@ -372,8 +372,7 @@ def ai_planner(request):
     if request.method == 'POST':
         try:
             # Generate the fitness plan using the AI planner
-            # result_text = generate_fitness_plan_from_profile(profile)
-            result_text = "AI Planner functionality is temporarily disabled. Please install required dependencies."
+            result_text = generate_fitness_plan_from_profile(profile)
         except Exception as e:
             error_text = f"An error occurred while generating the plan: {str(e)}"
     
