@@ -12,9 +12,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -26,7 +28,7 @@ SECRET_KEY = 'django-insecure-+w8s1pg03#fh8q0#bh-2!@$ig%^f8fh17ut96a%0!l2^(@+xgc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.lhr.life', '.localhost.run', '.trycloudflare.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -142,3 +144,23 @@ TEMPLATES[0]['OPTIONS']['context_processors'] += [
 ]
 
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.lhr.life',
+    'https://*.localhost.run',
+    'https://*.trycloudflare.com',
+    'https://naturals-display-brian-pioneer.trycloudflare.com',
+]
+
+# Email settings (Gmail SMTP via env). Fallback to console if not configured.
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'no-reply@example.com')
+
+if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    # Development fallback: print emails to console if credentials are missing
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
