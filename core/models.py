@@ -78,3 +78,15 @@ class ExerciseSet(models.Model):
     
     def __str__(self):
         return f"{self.exercise.name} - {self.sets} sets"
+
+
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reset_codes")
+    email = models.EmailField()
+    code_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    def is_valid(self) -> bool:
+        return self.used_at is None and timezone.now() < self.expires_at
