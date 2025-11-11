@@ -1,11 +1,180 @@
 {% extends 'base.html' %}
-{% block title %}Import CSV - Weight Training App{% endblock %}
+{% block title %}Import CSV - FitTrack+{% endblock %}
 {% block content %}
 <div class="text-white">
-    <h2 class="fw-bold">Import CSV</h2>
-    <p>Upload your previous workout data in CSV format.</p>
-    <p class="opacity-75">(Coming soon)</p>
+    <h2 class="fw-bold mb-4">Import CSV Data</h2>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <pre>{{ message }}</pre>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- CSV Upload Form -->
+        <div class="col-md-6">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <h5 class="mb-0">Upload CSV File</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.csv_file.id_for_label }}" class="form-label">Choose CSV File</label>
+                            {{ form.csv_file }}
+                            <div class="form-text text-white-50">{{ form.csv_file.help_text }}</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Import Data</button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary ms-2">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="col-md-6">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <h5 class="mb-0">CSV Format Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Your CSV file should have the following columns:</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Column</th>
+                                    <th>Required</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>date</code></td>
+                                    <td><span class="badge bg-danger">Yes</span></td>
+                                    <td><code>2025-11-11 14:30:00</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>exercise</code></td>
+                                    <td><span class="badge bg-danger">Yes</span></td>
+                                    <td><code>Push-up</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>sets</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>3</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>reps</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>15</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>weight_kg</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>50.5</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>duration_minutes</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>45</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>duration_seconds</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>120</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>distance_km</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>5.2</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>notes</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>Good workout</code></td>
+                                </tr>
+                                <tr>
+                                    <td><code>exercise_notes</code></td>
+                                    <td><span class="badge bg-warning">Optional</span></td>
+                                    <td><code>Felt strong</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample CSV -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Sample CSV Format</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="downloadSample()">Download Sample</button>
+                </div>
+                <div class="card-body">
+                    <pre class="text-white-50 small mb-0">date,exercise,sets,reps,weight_kg,duration_minutes,notes,exercise_notes
+2025-11-11 14:00:00,Push-up,3,15,,30,Morning workout,Felt strong
+2025-11-11 14:15:00,Squat,3,12,60,,Morning workout,Good form
+2025-11-11 14:30:00,Running,1,,,,30,Morning workout,5km run</pre>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function downloadSample() {
+    const csvContent = `date,exercise,sets,reps,weight_kg,duration_minutes,notes,exercise_notes
+2025-11-11 14:00:00,Push-up,3,15,,30,Morning workout,Felt strong
+2025-11-11 14:15:00,Squat,3,12,60,,Morning workout,Good form
+2025-11-11 14:30:00,Running,1,,,,30,Morning workout,5km run`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample_workout_data.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+
+<style>
+.form-text {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.table code {
+    color: #f8f9fa;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.alert pre {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+</style>
 {% endblock %}
 
 

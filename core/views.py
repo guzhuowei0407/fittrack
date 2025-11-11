@@ -1,12 +1,18 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import UserProfile
-from .forms import UserProfileForm
+from .models import UserProfile, WorkoutSession, ExerciseSet, Exercise
+from .forms import UserProfileForm, WorkoutSessionForm, ExerciseSetForm
 from django.views.decorators.cache import never_cache
-from .ai_planner import generate_fitness_plan_from_profile
+# from .ai_planner import generate_fitness_plan_from_profile
+from django.forms import formset_factory
+from django.http import JsonResponse
+import json
+import csv
+import io
+from datetime import datetime
 
 
 @never_cache
@@ -14,16 +20,173 @@ def home(request):
     return render(request, 'home.html')
 
 
+@login_required
 def add_data(request):
-    return render(request, 'add_data.html')
+    ExerciseSetFormSet = formset_factory(ExerciseSetForm, extra=1, can_delete=True)
+    
+    if request.method == 'POST':
+        workout_form = WorkoutSessionForm(request.POST)
+        formset = ExerciseSetFormSet(request.POST)
+        
+        if workout_form.is_valid() and formset.is_valid():
+            # Create the workout session
+            workout = workout_form.save(commit=False)
+            workout.user = request.user
+            workout.save()
+            
+            # Create exercise sets
+            for form in formset:
+                if form.cleaned_data and not form.cleaned_data.get('DELETE'):
+                    exercise_set = form.save(commit=False)
+                    exercise_set.workout = workout
+                    exercise_set.save()
+            
+            messages.success(request, 'Workout data added successfully!')
+            return redirect('dashboard')  # Redirect to dashboard or workout list
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        workout_form = WorkoutSessionForm()
+        formset = ExerciseSetFormSet()
+    
+    # Get all exercises for the dropdown
+    exercises = Exercise.objects.all()
+    
+    return render(request, 'add_data.html', {
+        'workout_form': workout_form,
+        'formset': formset,
+        'exercises': exercises
+    })
 
 
+@login_required
 def import_csv(request):
-    return render(request, 'import_csv.html')
+    from .forms import CSVImportForm
+    
+    if request.method == 'POST':
+        form = CSVImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = request.FILES['csv_file']
+            
+            # Check if it's a CSV file
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, 'Please upload a valid CSV file.')
+                return render(request, 'import_csv.html', {'form': form})
+            
+            try:
+                # Read CSV file
+                decoded_file = csv_file.read().decode('utf-8')
+                io_string = io.StringIO(decoded_file)
+                reader = csv.DictReader(io_string)
+                
+                imported_count = 0
+                error_rows = []
+                
+                for row_num, row in enumerate(reader, start=2):  # Start from 2 (after header)
+                    try:
+                        # Parse the CSV row and create workout session
+                        workout_date = datetime.strptime(row.get('date', ''), '%Y-%m-%d %H:%M:%S')
+                        
+                        # Create or get workout session
+                        workout, created = WorkoutSession.objects.get_or_create(
+                            user=request.user,
+                            date=workout_date,
+                            defaults={
+                                'duration_minutes': int(row.get('duration_minutes', 0)) if row.get('duration_minutes') else None,
+                                'notes': row.get('notes', '')
+                            }
+                        )
+                        
+                        # Get or create exercise
+                        exercise_name = row.get('exercise', '').strip()
+                        if exercise_name:
+                            exercise, _ = Exercise.objects.get_or_create(
+                                name=exercise_name,
+                                defaults={'category': 'other', 'description': f'Imported from CSV: {exercise_name}'}
+                            )
+                            
+                            # Create exercise set
+                            ExerciseSet.objects.create(
+                                workout=workout,
+                                exercise=exercise,
+                                sets=int(row.get('sets', 1)),
+                                reps=int(row.get('reps', 0)) if row.get('reps') else None,
+                                weight_kg=float(row.get('weight_kg', 0)) if row.get('weight_kg') else None,
+                                duration_seconds=int(row.get('duration_seconds', 0)) if row.get('duration_seconds') else None,
+                                distance_km=float(row.get('distance_km', 0)) if row.get('distance_km') else None,
+                                notes=row.get('exercise_notes', '')
+                            )
+                            
+                            imported_count += 1
+                        
+                    except Exception as e:
+                        error_rows.append(f"Row {row_num}: {str(e)}")
+                
+                if imported_count > 0:
+                    messages.success(request, f'Successfully imported {imported_count} exercise records.')
+                
+                if error_rows:
+                    error_msg = "Some rows had errors:\n" + "\n".join(error_rows[:5])  # Show first 5 errors
+                    if len(error_rows) > 5:
+                        error_msg += f"\n... and {len(error_rows) - 5} more errors."
+                    messages.warning(request, error_msg)
+                
+                if imported_count > 0:
+                    return redirect('dashboard')
+                    
+            except Exception as e:
+                messages.error(request, f'Error processing CSV file: {str(e)}')
+    else:
+        form = CSVImportForm()
+    
+    return render(request, 'import_csv.html', {'form': form})
 
 
+@login_required
+def export_csv(request):
+    from django.http import HttpResponse
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="my_workout_data.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['date', 'exercise', 'sets', 'reps', 'weight_kg', 'duration_minutes', 'duration_seconds', 'distance_km', 'notes', 'exercise_notes'])
+    
+    # Get all user's exercise sets with workout info
+    exercise_sets = ExerciseSet.objects.filter(workout__user=request.user).select_related('workout', 'exercise').order_by('workout__date')
+    
+    for exercise_set in exercise_sets:
+        writer.writerow([
+            exercise_set.workout.date.strftime('%Y-%m-%d %H:%M:%S'),
+            exercise_set.exercise.name,
+            exercise_set.sets,
+            exercise_set.reps or '',
+            exercise_set.weight_kg or '',
+            exercise_set.workout.duration_minutes or '',
+            exercise_set.duration_seconds or '',
+            exercise_set.distance_km or '',
+            exercise_set.workout.notes or '',
+            exercise_set.notes or ''
+        ])
+    
+    return response
+
+
+@login_required
 def dashboard(request):
-    return render(request, 'dashboard.html')
+    # Get user's recent workouts
+    recent_workouts = WorkoutSession.objects.filter(user=request.user).order_by('-date')[:10]
+    
+    # Get some basic stats
+    total_workouts = WorkoutSession.objects.filter(user=request.user).count()
+    total_exercises = ExerciseSet.objects.filter(workout__user=request.user).count()
+    
+    context = {
+        'recent_workouts': recent_workouts,
+        'total_workouts': total_workouts,
+        'total_exercises': total_exercises,
+    }
+    return render(request, 'dashboard.html', context)
 
 
 @login_required
@@ -110,7 +273,8 @@ def ai_planner(request):
     if request.method == 'POST':
         try:
             # Generate the fitness plan using the AI planner
-            result_text = generate_fitness_plan_from_profile(profile)
+            # result_text = generate_fitness_plan_from_profile(profile)
+            result_text = "AI Planner functionality is temporarily disabled. Please install required dependencies."
         except Exception as e:
             error_text = f"An error occurred while generating the plan: {str(e)}"
     

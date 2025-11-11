@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class UserProfile(models.Model):
@@ -34,4 +35,46 @@ class UserProfile(models.Model):
     def __str__(self) -> str:
         return f"Profile of {self.user.username}"
 
-# Create your models here.
+
+class Exercise(models.Model):
+    """Exercise types that users can perform"""
+    name = models.CharField(max_length=100)
+    category = models.CharField(max_length=50, choices=[
+        ('strength', 'Strength Training'),
+        ('cardio', 'Cardio'),
+        ('flexibility', 'Flexibility'),
+        ('other', 'Other')
+    ], default='strength')
+    description = models.TextField(blank=True)
+    
+    def __str__(self):
+        return self.name
+
+
+class WorkoutSession(models.Model):
+    """A workout session record"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True)
+    duration_minutes = models.PositiveIntegerField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.date.strftime('%Y-%m-%d %H:%M')}"
+
+
+class ExerciseSet(models.Model):
+    """Individual set within a workout"""
+    workout = models.ForeignKey(WorkoutSession, on_delete=models.CASCADE, related_name='exercise_sets')
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+    sets = models.PositiveIntegerField(default=1)
+    reps = models.PositiveIntegerField(null=True, blank=True)
+    weight_kg = models.FloatField(null=True, blank=True)
+    duration_seconds = models.PositiveIntegerField(null=True, blank=True)  # For cardio exercises
+    distance_km = models.FloatField(null=True, blank=True)  # For running, cycling etc.
+    notes = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.exercise.name} - {self.sets} sets"

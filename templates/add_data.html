@@ -1,11 +1,235 @@
 {% extends 'base.html' %}
-{% block title %}Add Data - Weight Training App{% endblock %}
+{% block title %}Add Workout Data - FitTrack+{% endblock %}
+
 {% block content %}
 <div class="text-white">
-    <h2 class="fw-bold">Add Training Data</h2>
-    <p>This page will contain a form to add workouts.</p>
-    <p class="opacity-75">(Coming soon)</p>
+    <h2 class="fw-bold mb-4">Add Workout Session</h2>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        
+        <!-- Workout Session Details -->
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <h5 class="mb-0">Workout Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ workout_form.date.id_for_label }}" class="form-label">Date & Time</label>
+                            {{ workout_form.date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ workout_form.duration_minutes.id_for_label }}" class="form-label">Duration (minutes)</label>
+                            {{ workout_form.duration_minutes }}
+                        </div>
+                        <div class="col-12">
+                            <label for="{{ workout_form.notes.id_for_label }}" class="form-label">Workout Notes</label>
+                            {{ workout_form.notes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exercise Sets -->
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Exercises</h5>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="addExerciseSet()">Add Exercise</button>
+                </div>
+                <div class="card-body">
+                    <div id="exercise-formset">
+                        {{ formset.management_form }}
+                        {% for form in formset %}
+                            <div class="exercise-set-form border-bottom pb-3 mb-3">
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Exercise</label>
+                                        {{ form.exercise }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Sets</label>
+                                        {{ form.sets }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Reps</label>
+                                        {{ form.reps }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Weight (kg)</label>
+                                        {{ form.weight_kg }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Duration (sec)</label>
+                                        {{ form.duration_seconds }}
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="button" class="btn btn-sm btn-danger d-block" onclick="removeExerciseSet(this)">×</button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Distance (km)</label>
+                                        {{ form.distance_km }}
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label">Notes</label>
+                                        {{ form.notes }}
+                                    </div>
+                                    <div class="col-md-1">
+                                        {{ form.DELETE }}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="col-12">
+            <button type="submit" class="btn btn-success btn-lg">Save Workout</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-lg ms-2">Cancel</a>
+        </div>
+    </form>
 </div>
+
+<script>
+let formIndex = {{ formset.total_form_count|default:1 }};
+
+function addExerciseSet() {
+    const formset = document.getElementById('exercise-formset');
+    const newForm = document.createElement('div');
+    newForm.className = 'exercise-set-form border-bottom pb-3 mb-3';
+    
+    // Create the new form HTML
+    newForm.innerHTML = `
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Exercise</label>
+                <select name="form-${formIndex}-exercise" class="form-control">
+                    <option value="">---------</option>
+                    {% for exercise in exercises %}
+                    <option value="{{ exercise.id }}">{{ exercise.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Sets</label>
+                <input type="number" name="form-${formIndex}-sets" class="form-control" min="1" value="1">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Reps</label>
+                <input type="number" name="form-${formIndex}-reps" class="form-control" min="1">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Weight (kg)</label>
+                <input type="number" name="form-${formIndex}-weight_kg" class="form-control" step="0.5">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Duration (sec)</label>
+                <input type="number" name="form-${formIndex}-duration_seconds" class="form-control">
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-sm btn-danger d-block" onclick="removeExerciseSet(this)">×</button>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Distance (km)</label>
+                <input type="number" name="form-${formIndex}-distance_km" class="form-control" step="0.1">
+            </div>
+            <div class="col-md-8">
+                <label class="form-label">Notes</label>
+                <textarea name="form-${formIndex}-notes" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-md-1">
+                <input type="hidden" name="form-${formIndex}-DELETE" value="">
+            </div>
+        </div>
+    `;
+    
+    formset.appendChild(newForm);
+    
+    // Update form count
+    formIndex++;
+    document.getElementById('id_form-TOTAL_FORMS').value = formIndex;
+}
+
+function removeExerciseSet(button) {
+    const formDiv = button.closest('.exercise-set-form');
+    const deleteInput = formDiv.querySelector('input[name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on';
+        formDiv.style.display = 'none';
+    } else {
+        formDiv.remove();
+    }
+}
+</script>
+
+<style>
+.exercise-set-form {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+.form-control {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: #0d6efd !important;
+    color: white !important;
+}
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+.form-label {
+    color: white !important;
+    font-weight: 500;
+}
+
+label {
+    color: white !important;
+}
+
+.col-md-2 label, .col-md-3 label, .col-md-8 label, .col-md-6 label, .col-md-1 label, .col-12 label {
+    color: white !important;
+}
+
+/* Force all text to be white */
+* {
+    color: white;
+}
+
+.card-header h5, .card-body label, .form-label {
+    color: white !important;
+}
+
+/* Override any Bootstrap text classes */
+.text-muted, .text-secondary {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+</style>
 {% endblock %}
 
 

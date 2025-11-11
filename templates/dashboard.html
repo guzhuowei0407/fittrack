@@ -1,11 +1,154 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard - Weight Training App{% endblock %}
+{% block title %}Dashboard - FitTrack+{% endblock %}
 {% block content %}
 <div class="text-white">
-    <h2 class="fw-bold">Dashboard</h2>
-    <p>Visualizations and summaries will go here.</p>
-    <p class="opacity-75">(Coming soon)</p>
+    <h2 class="fw-bold mb-4">Dashboard</h2>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">{{ total_workouts }}</h3>
+                    <p class="mb-0">Total Workouts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body text-center">
+                    <h3 class="text-success">{{ total_exercises }}</h3>
+                    <p class="mb-0">Total Exercise Sets</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body text-center">
+                    <h3 class="text-info">
+                        {% if recent_workouts %}
+                            {{ recent_workouts.0.date|date:"M d" }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </h3>
+                    <p class="mb-0">Last Workout</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Workouts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Workouts</h5>
+                    <a href="{% url 'add_data' %}" class="btn btn-primary btn-sm">Add New Workout</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_workouts %}
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Duration</th>
+                                        <th>Exercises</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for workout in recent_workouts %}
+                                    <tr>
+                                        <td>{{ workout.date|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            {% if workout.duration_minutes %}
+                                                {{ workout.duration_minutes }} min
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {{ workout.exercise_sets.count }} exercise{{ workout.exercise_sets.count|pluralize }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if workout.notes %}
+                                                {{ workout.notes|truncatewords:10 }}
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewWorkout({{ workout.id }})">View</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <h4 class="text-white">No workouts yet</h4>
+                            <p class="text-white-75 mb-3">Start by adding your first workout!</p>
+                            <a href="{% url 'add_data' %}" class="btn btn-primary">Add Your First Workout</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+function viewWorkout(workoutId) {
+    // For now, just show an alert. Later you can implement a detailed view
+    alert('Workout details view coming soon! Workout ID: ' + workoutId);
+}
+</script>
+
+<style>
+.card {
+    background: rgba(0, 0, 0, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px);
+    color: white !important;
+}
+
+.table-dark {
+    background: transparent !important;
+    color: white !important;
+}
+
+.table-dark th,
+.table-dark td {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+}
+
+.badge {
+    color: white !important;
+}
+
+h1, h2, h3, h4, h5, h6, p, span {
+    color: white !important;
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.text-white-75 {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.card-body p {
+    color: white !important;
+}
+</style>
 {% endblock %}
 
 

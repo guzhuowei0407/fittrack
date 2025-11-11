@@ -31,6 +31,7 @@
                     <li class="nav-item"><a class="nav-link" href="/exercises/">Exercises</a></li>
                     <li class="nav-item"><a class="nav-link" href="/add/">Add Data</a></li>
                     <li class="nav-item"><a class="nav-link" href="/import/">Import CSV</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/export/">Export CSV</a></li>
                     <li class="nav-item"><a class="nav-link" href="/dashboard/">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'ai_planner' %}">🤖 AI Planner</a></li>
                     <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
@@ -42,7 +43,7 @@
     </nav>
     {% endif %}
 
-    <main class="content-container container py-5">
+    <main class="content-container container py-5" style="color: white;">
         {% block content %}{% endblock %}
     </main>
 

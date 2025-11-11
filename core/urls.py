@@ -10,6 +10,7 @@ urlpatterns = [
     path('exercises/', views.exercises, name='exercises'),
     path('add/', views.add_data, name='add_data'),
     path('import/', views.import_csv, name='import_csv'),
+    path('export/', views.export_csv, name='export_csv'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('ai-planner/', views.ai_planner, name='ai_planner'),
 ]
