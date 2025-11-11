@@ -76,15 +76,8 @@ WSGI_APPLICATION = 'fittrack.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'fittrack',
-        'USER': 'root',
-        'PASSWORD': 'zqa123',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        "OPTIONS": {
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -136,6 +129,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = 'login'                
 LOGIN_REDIRECT_URL = 'dashboard'   
 LOGOUT_REDIRECT_URL = 'home'       
+
+# Session configuration for Mac OS compatibility
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = False
 
 TEMPLATES[0]['OPTIONS']['context_processors'] += [
     'django.template.context_processors.request',

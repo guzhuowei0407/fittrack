@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}AI Planner - FitTrack+{% endblock %}
+{% block content %}
+<div class="container profile-bg">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <div class="card profile-card text-white shadow-lg">
+                <div class="card-body p-4 p-md-5">
+                    <div class="mb-4">
+                        <h2 class="fw-bold mb-2">🤖 AI Fitness Planner</h2>
+                        <p class="text-white-50 mb-4">Generate your personalized 4-week fitness and diet plan powered by AI</p>
+                    </div>
+
+                    {% if error %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <strong>⚠️ Notice:</strong> {{ error }}
+                        {% if not profile.gender or not profile.age or not profile.height_cm or not profile.weight_kg %}
+                        <br><br>
+                        <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-success">Complete Your Profile</a>
+                        {% endif %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="info-tile">
+                                    <div class="label">Your Profile</div>
+                                    <div class="value small">
+                                        <div>Gender: {{ profile.get_gender_display|default:'Not set' }}</div>
+                                        <div>Age: {{ profile.age|default:'Not set' }}</div>
+                                        <div>Height: {{ profile.height_cm|default:'Not set' }} cm</div>
+                                        <div>Weight: {{ profile.weight_kg|default:'Not set' }} kg</div>
+                                        <div>Fitness Level: {{ profile.get_fitness_level_display|default:'Not set' }}</div>
+                                        <div>Goal: {{ profile.get_primary_goal_choice_display|default:'Not set' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-tile">
+                                    <div class="label">How It Works</div>
+                                    <div class="value small">
+                                        <p class="mb-2">Our AI analyzes your profile and creates a customized 4-week plan including:</p>
+                                        <ul class="small mb-0">
+                                            <li>Personalized training schedule</li>
+                                            <li>Progressive overload plan</li>
+                                            <li>Nutrition guidelines</li>
+                                            <li>Meal suggestions</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" class="mb-4">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg w-100" {% if not profile.gender or not profile.age or not profile.height_cm or not profile.weight_kg %}disabled{% endif %}>
+                            <span class="me-2">✨</span>Generate My Personalized Plan
+                        </button>
+                        {% if not profile.gender or not profile.age or not profile.height_cm or not profile.weight_kg %}
+                        <p class="text-center text-white-50 mt-2 small">Please complete your profile first to generate a plan</p>
+                        {% else %}
+                        <p class="text-center text-white-50 mt-2 small">This may take 30-60 seconds. Please be patient.</p>
+                        {% endif %}
+                    </form>
+
+                    {% if result %}
+                    <div class="mt-4">
+                        <h3 class="fw-bold mb-3">📋 Your Personalized 4-Week Plan</h3>
+                        <div class="plan-result">
+                            <div class="info-tile" style="max-height: 600px; overflow-y: auto;">
+                                <pre class="text-white mb-0" style="white-space: pre-wrap; font-family: 'Poppins', sans-serif; font-size: 0.95rem; line-height: 1.6;">{{ result }}</pre>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-center">
+                            <button onclick="window.print()" class="btn btn-outline-light me-2">
+                                <span class="me-1">🖨️</span>Print Plan
+                            </button>
+                            <button onclick="copyToClipboard()" class="btn btn-outline-light">
+                                <span class="me-1">📋</span>Copy to Clipboard
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard() {
+    const planText = document.querySelector('.plan-result pre').textContent;
+    navigator.clipboard.writeText(planText).then(function() {
+        alert('Plan copied to clipboard!');
+    }, function(err) {
+        console.error('Failed to copy: ', err);
+        alert('Failed to copy. Please select and copy manually.');
+    });
+}
+</script>
+{% endblock %}
+

@@ -11,6 +11,7 @@ urlpatterns = [
     path('add/', views.add_data, name='add_data'),
     path('import/', views.import_csv, name='import_csv'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('ai-planner/', views.ai_planner, name='ai_planner'),
 ]
 
 

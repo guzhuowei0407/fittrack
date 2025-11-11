@@ -2,9 +2,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User
+from django.contrib import messages
 from .models import UserProfile
 from .forms import UserProfileForm
 from django.views.decorators.cache import never_cache
+from .ai_planner import generate_fitness_plan_from_profile
 
 
 @never_cache
@@ -32,15 +34,24 @@ def profile_view(request):
 
 @login_required
 def profile_edit(request):
+    # Ensure user is authenticated
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     if request.method == 'POST':
         form = UserProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
+            messages.success(request, 'Profile updated successfully!')
+            # Use reverse to get the URL, or direct path
             return redirect('profile')
+        else:
+            # Form has errors, show them
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = UserProfileForm(instance=profile)
-    return render(request, 'profile_edit.html', {"form": form})
+    return render(request, 'profile_edit.html', {"form": form, "profile": profile})
 
 
 def login_submit(request):
@@ -76,4 +87,36 @@ def exercises(request):
         {"key": "rowing", "name": "Rowing Machine", "desc": "Drive sequence: legs → body → arms; recover in reverse order.", "youtube_id": "ZN0J6qKCIrI"},
     ]
     return render(request, 'exercises.html', {"items": items})
+
+
+@login_required
+def ai_planner(request):
+    """
+    AI Planner view - generates personalized fitness plan based on user profile.
+    """
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    result_text = None
+    error_text = None
+    
+    # Check if user has filled in their profile
+    if not profile.gender or not profile.age or not profile.height_cm or not profile.weight_kg:
+        error_text = "Please complete your profile first (Gender, Age, Height, Weight) before generating a plan. Go to Profile > Edit Profile to update your information."
+        return render(request, 'ai_planner.html', {
+            'profile': profile,
+            'result': result_text,
+            'error': error_text
+        })
+    
+    if request.method == 'POST':
+        try:
+            # Generate the fitness plan using the AI planner
+            result_text = generate_fitness_plan_from_profile(profile)
+        except Exception as e:
+            error_text = f"An error occurred while generating the plan: {str(e)}"
+    
+    return render(request, 'ai_planner.html', {
+        'profile': profile,
+        'result': result_text,
+        'error': error_text
+    })
 
