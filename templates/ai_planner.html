@@ -68,20 +68,136 @@
 
                     {% if result %}
                     <div class="mt-4">
-                        <h3 class="fw-bold mb-3">📋 Your Personalized 4-Week Plan</h3>
-                        <div class="plan-result">
-                            <div class="info-tile" style="max-height: 600px; overflow-y: auto;">
-                                <pre class="text-white mb-0" style="white-space: pre-wrap; font-family: 'Poppins', sans-serif; font-size: 0.95rem; line-height: 1.6;">{{ result }}</pre>
+                        {% if result.error %}
+                            <div class="alert alert-danger">
+                                <h4>Oops! Something went wrong.</h4>
+                                <p>{{ result.error }}</p>
+                                <details>
+                                    <summary>Raw Output</summary>
+                                    <pre>{{ result.raw_text }}</pre>
+                                </details>
                             </div>
-                        </div>
-                        <div class="mt-3 text-center">
-                            <button onclick="window.print()" class="btn btn-outline-light me-2">
-                                <span class="me-1">🖨️</span>Print Plan
-                            </button>
-                            <button onclick="copyToClipboard()" class="btn btn-outline-light">
-                                <span class="me-1">📋</span>Copy to Clipboard
-                            </button>
-                        </div>
+                        {% else %}
+                            <!-- Training Plan Section -->
+                            <h3 class="fw-bold mb-3 text-success"><i class="fas fa-dumbbell me-2"></i>Your 4-Week Training Plan</h3>
+                            <p class="text-white-50 mb-4">{{ result.training_plan.summary }}</p>
+
+                            <div class="accordion mb-5" id="trainingAccordion">
+                                {% for week in result.training_plan.weeks %}
+                                <div class="accordion-item bg-dark border-secondary">
+                                    <h2 class="accordion-header" id="heading{{ week.week_number }}">
+                                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ week.week_number }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ week.week_number }}">
+                                            <strong>Week {{ week.week_number }}: {{ week.focus }}</strong>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ week.week_number }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ week.week_number }}" data-bs-parent="#trainingAccordion">
+                                        <div class="accordion-body text-white">
+                                            <div class="table-responsive">
+                                                <table class="table table-dark table-hover table-bordered mb-0">
+                                                    <thead>
+                                                        <tr class="table-secondary text-dark">
+                                                            <th style="width: 15%">Day</th>
+                                                            <th style="width: 20%">Type</th>
+                                                            <th>Exercises / Details</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for day in week.schedule %}
+                                                        <tr>
+                                                            <td class="fw-bold text-success">{{ day.day }}</td>
+                                                            <td><span class="badge {% if 'Rest' in day.type %}bg-secondary{% else %}bg-primary{% endif %}">{{ day.type }}</span></td>
+                                                            <td>
+                                                                {% if day.exercises %}
+                                                                    <ul class="list-unstyled mb-0">
+                                                                    {% for exercise in day.exercises %}
+                                                                        <li class="mb-1">
+                                                                            <strong>{{ exercise.name }}</strong> 
+                                                                            <span class="text-white-50 small">({{ exercise.sets }} sets x {{ exercise.reps }})</span>
+                                                                            {% if exercise.notes %}
+                                                                            <br><small class="text-muted fst-italic">- {{ exercise.notes }}</small>
+                                                                            {% endif %}
+                                                                        </li>
+                                                                    {% endfor %}
+                                                                    </ul>
+                                                                {% endif %}
+                                                                {% if day.cardio %}
+                                                                    <div class="mt-2 text-info small"><i class="fas fa-running me-1"></i> {{ day.cardio }}</div>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Diet Plan Section -->
+                            <h3 class="fw-bold mb-3 text-warning"><i class="fas fa-utensils me-2"></i>Nutrition Plan</h3>
+                            
+                            <div class="row g-4 mb-4">
+                                <!-- Macros Card -->
+                                <div class="col-md-5">
+                                    <div class="card bg-dark border-warning h-100">
+                                        <div class="card-header bg-warning text-dark fw-bold">Daily Targets</div>
+                                        <div class="card-body text-white">
+                                            <div class="display-6 text-center mb-3 fw-bold text-warning">{{ result.diet_plan.calories }}</div>
+                                            <div class="d-flex justify-content-between text-center">
+                                                <div>
+                                                    <div class="small text-white-50">Protein</div>
+                                                    <div class="fw-bold">{{ result.diet_plan.macros.protein }}</div>
+                                                </div>
+                                                <div>
+                                                    <div class="small text-white-50">Carbs</div>
+                                                    <div class="fw-bold">{{ result.diet_plan.macros.carbs }}</div>
+                                                </div>
+                                                <div>
+                                                    <div class="small text-white-50">Fats</div>
+                                                    <div class="fw-bold">{{ result.diet_plan.macros.fats }}</div>
+                                                </div>
+                                            </div>
+                                            <hr class="border-secondary">
+                                            <h6 class="text-warning small text-uppercase">Key Guidelines</h6>
+                                            <ul class="small mb-0 ps-3">
+                                                {% for guide in result.diet_plan.guidelines %}
+                                                <li>{{ guide }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Meals Card -->
+                                <div class="col-md-7">
+                                    <div class="card bg-dark border-secondary h-100">
+                                        <div class="card-header bg-secondary text-white fw-bold">Meal Suggestions</div>
+                                        <div class="card-body p-0">
+                                            <div class="list-group list-group-flush">
+                                                {% for meal in result.diet_plan.meals %}
+                                                <div class="list-group-item bg-dark text-white border-secondary">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1 text-success">{{ meal.type }}</h6>
+                                                    </div>
+                                                    <p class="mb-1 small text-white-50">
+                                                        {{ meal.options|join:" <span class='text-secondary mx-1'>|</span> "|safe }}
+                                                    </p>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 text-center">
+                                <button onclick="window.print()" class="btn btn-outline-light me-2">
+                                    <span class="me-1">🖨️</span>Print Plan
+                                </button>
+                            </div>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>

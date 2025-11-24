@@ -4,6 +4,8 @@ This module uses Google Gemini API for fitness plan generation.
 """
 import google.generativeai as genai
 import os
+import json
+import re
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -52,9 +54,9 @@ def generate_fitness_plan_from_profile(user_profile, training_history_summary=""
 * **Workout Types:** A balanced mix of strength training and cardio.
 """
         
-        # 5. Construct the prompt (same as your original prompt engineering)
+        # 5. Construct the prompt
         prompt = f"""
-You are an expert AI personal trainer and nutritionist named FitTrack AI. Your task is to create a comprehensive, personalized, and actionable 4-week training and diet plan based on the user's detailed profile and recent activity. The plan should be scientific, safe, and tailored to help the user achieve their goals.
+You are an expert AI personal trainer and nutritionist named FitTrack AI. Your task is to create a comprehensive, personalized, and actionable 4-week training and diet plan based on the user's detailed profile.
 
 ### User Profile
 * **Gender:** {user_gender}
@@ -64,48 +66,100 @@ You are an expert AI personal trainer and nutritionist named FitTrack AI. Your t
 * **Fitness Level:** {user_fitness_level}
 * **Primary Goal:** {detailed_goal}
 
-### Recent Training History (Summary of the last month)
+### Recent Training History
 {training_history_summary}
 
-### Your Task: Generate the 4-Week Plan
+### Your Task
+Generate a detailed 4-week plan in strict JSON format. Do not include any markdown formatting (like ```json) or explanatory text outside the JSON object. The JSON structure must be exactly as follows:
 
-Based on all the information provided, generate a detailed 4-week plan.
-
-**1. The 4-Week Training Plan:**
-* **Structure:** Create a weekly split that balances intensity and recovery, for example, a Push/Pull/Legs or an Upper/Lower split.
-* **Progressive Overload:** The plan must incorporate the principle of progressive overload. Show how the user can increase weight, reps, or intensity from Week 1 to Week 4.
-* **Clarity:** For each training day, provide specific exercises (e.g., Bench Press, Barbell Squats, Lat Pulldowns), including the number of sets and repetitions (e.g., 3 sets of 8-12 reps).
-* **Cardio:** Integrate 1-2 cardio sessions per week, specifying the type (e.g., LISS - Low-Intensity Steady State, or HIIT) and duration.
-* **Rest:** Explicitly schedule at least two rest days per week.
-* **Format:** Present the weekly schedule in a clear, easy-to-read table format for each of the 4 weeks.
-
-**2. The 4-Week Diet Plan:**
-* **Caloric & Macro Targets:** First, calculate and state the recommended daily calorie intake and macronutrient split (Protein, Carbs, Fat in grams) for the user's goal.
-* **Nutritional Principles:** Provide 3-5 key nutritional guidelines for the user to follow (e.g., prioritize protein, choose complex carbs, stay hydrated).
-* **Sample Meal Ideas:** Do not create a rigid daily meal plan. Instead, provide a list of healthy and easy-to-prepare sample meal ideas for Breakfast, Lunch, Dinner, and Snacks. This gives the user flexibility.
-* **Integration:** The diet plan should directly support the energy demands of the training plan.
-
-Please generate the complete, detailed plan now.
+{{
+  "training_plan": {{
+    "summary": "Brief overview of the training strategy (1-2 sentences).",
+    "weeks": [
+      {{
+        "week_number": 1,
+        "focus": "Theme of the week (e.g., Foundation & Form)",
+        "schedule": [
+          {{
+            "day": "Day 1",
+            "type": "Workout Type (e.g., Upper Body Push)",
+            "exercises": [
+              {{
+                "name": "Exercise Name",
+                "sets": "3",
+                "reps": "8-12",
+                "notes": "Brief tip (optional)"
+              }}
+            ],
+            "cardio": "Cardio details if applicable, else null"
+          }},
+          ... (cover 7 days, use "Rest Day" for type if resting)
+        ]
+      }},
+      ... (Repeat for weeks 2, 3, 4)
+    ]
+  }},
+  "diet_plan": {{
+    "calories": "Daily target (e.g., 2500 kcal)",
+    "macros": {{
+      "protein": "Target in grams",
+      "carbs": "Target in grams",
+      "fats": "Target in grams"
+    }},
+    "guidelines": [
+      "Guideline 1",
+      "Guideline 2",
+      "Guideline 3"
+    ],
+    "meals": [
+      {{
+        "type": "Breakfast",
+        "options": ["Option 1", "Option 2"]
+      }},
+      {{
+        "type": "Lunch",
+        "options": ["Option 1", "Option 2"]
+      }},
+      {{
+        "type": "Dinner",
+        "options": ["Option 1", "Option 2"]
+      }},
+      {{
+        "type": "Snacks",
+        "options": ["Option 1", "Option 2"]
+      }}
+    ]
+  }}
+}}
 """
         
         # 6. Call the Generative AI Model (Gemini)
-        # Try gemini-2.5-flash first, fallback to gemini-1.5-flash if not available
         try:
             model = genai.GenerativeModel('gemini-2.5-flash')
         except Exception:
-            # Fallback to gemini-1.5-flash if 2.5 is not available
             model = genai.GenerativeModel('gemini-1.5-flash')
         
         response = model.generate_content(prompt)
         result_text = response.text
         
-        return result_text
+        # Clean up the response to ensure it's valid JSON
+        # Remove markdown code blocks if present
+        clean_json = re.sub(r'```json\s*|\s*```', '', result_text).strip()
+        
+        # Parse JSON to ensure validity, then return the object (not string)
+        # The view will handle passing this object to the template
+        try:
+            plan_data = json.loads(clean_json)
+            return plan_data
+        except json.JSONDecodeError:
+            # Fallback if JSON parsing fails - return text but wrapped in a structure
+            return {"error": "Failed to parse AI response as JSON", "raw_text": result_text}
         
     except ValueError as ve:
         # API key or configuration error
-        return f"Configuration Error: {str(ve)}\n\nPlease check:\n1. Create a .env file in the project root\n2. Add: GEMINI_API_KEY=your_api_key_here\n3. Get your API key from: https://makersuite.google.com/app/apikey"
+        return {"error": f"Configuration Error: {str(ve)}", "details": "Please check your .env file and API key."}
     except Exception as e:
         # Other errors (API errors, network errors, etc.)
         error_type = type(e).__name__
-        return f"Error generating plan ({error_type}): {str(e)}\n\nPlease check:\n1. Your internet connection\n2. Your Gemini API key is valid\n3. You have API quota remaining"
+        return {"error": f"Error generating plan ({error_type}): {str(e)}", "details": "Please check your internet connection and API quota."}
 
