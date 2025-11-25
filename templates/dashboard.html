@@ -104,6 +104,20 @@
             </div>
         </div>
     </div>
+
+    <!-- Weekly Activity Line Chart -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Weekly Activity (Total minutes per day)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyChart" height="90"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -113,6 +127,54 @@ function viewWorkout(workoutId) {
 }
 </script>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const labels = {{ weekly_chart_labels|safe }};
+    const dataValues = {{ weekly_chart_values|safe }};
+    const ctx = document.getElementById('weeklyChart');
+    if (!ctx) return;
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Minutes',
+                data: dataValues,
+                fill: false,
+                borderColor: '#22c55e',
+                backgroundColor: '#22c55e',
+                tension: 0.25,
+                pointRadius: 4,
+                pointBackgroundColor: '#22c55e',
+                pointBorderColor: '#1a1a1a'
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.08)' },
+                    ticks: { color: '#fff' }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255,255,255,0.08)' },
+                    ticks: { color: '#fff' },
+                    title: {
+                        display: true,
+                        text: 'Minutes',
+                        color: '#fff'
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>
 <style>
 .card {
     background: rgba(0, 0, 0, 0.7) !important;

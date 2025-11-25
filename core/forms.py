@@ -17,6 +17,38 @@ class UserProfileForm(forms.ModelForm):
             "fitness_level",
             "primary_goal_choice",
         ]
+        widgets = {
+            "avatar": forms.FileInput(attrs={
+                "class": "form-control",
+                "accept": "image/*",
+            }),
+            "gender": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "age": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "placeholder": "Your age",
+            }),
+            "height_cm": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.5",
+                "placeholder": "Height in cm",
+            }),
+            "weight_kg": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.1",
+                "placeholder": "Weight in kg",
+            }),
+            "fitness_level": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "primary_goal_choice": forms.Select(attrs={
+                "class": "form-select",
+            }),
+        }
 
 
 class WorkoutSessionForm(forms.ModelForm):

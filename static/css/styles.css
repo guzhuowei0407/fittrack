@@ -66,6 +66,8 @@ body, .navbar, .card, .btn { font-family: 'Poppins', system-ui, -apple-system, S
 .info-tile .value { font-size: 1.2rem; font-weight: 600; color: #fff; margin-top: 6px; }
 .btn { padding: 0.65rem 1rem; }
 .btn-lg { padding: 0.8rem 1.25rem; }
+.profile-section-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: .12em; color: rgba(255,255,255,0.7); }
+.divider { border-top: 1px solid rgba(255,255,255,0.12); }
 
 /* Form and text styles for better visibility */
 .form-control {
