@@ -9,9 +9,9 @@
                     <div class="d-flex align-items-center mb-4">
                         <div class="me-4 flex-shrink-0">
                             {% if form.instance.avatar %}
-                            <img src="{{ form.instance.avatar.url }}" alt="avatar" class="rounded-circle profile-avatar">
+                            <img id="avatarPreview" src="{{ form.instance.avatar.url }}" alt="avatar" class="rounded-circle profile-avatar">
                             {% else %}
-                            <div class="rounded-circle d-flex align-items-center justify-content-center profile-avatar placeholder">
+                            <div id="avatarPlaceholder" class="rounded-circle d-flex align-items-center justify-content-center profile-avatar placeholder">
                                 <span class="fs-1">👤</span>
                             </div>
                             {% endif %}
@@ -41,11 +41,22 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
 
-                        <div class="mb-3">
-                            <label class="form-label">Avatar</label>
-                            {{ form.avatar }}
+                        <div class="mb-2 profile-section-title">Avatar</div>
+                        <div class="mb-4">
+                            <label class="form-label">Profile photo</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <div>
+                                    <img id="avatarLivePreview" src="{% if form.instance.avatar %}{{ form.instance.avatar.url }}{% endif %}" class="rounded-circle" style="width:80px;height:80px;object-fit:cover; display:{% if form.instance.avatar %}block{% else %}none{% endif %};" alt="">
+                                </div>
+                                <div class="flex-grow-1">
+                                    {{ form.avatar }}
+                                    <div class="form-text text-muted">JPG/PNG recommended. Max ~2MB.</div>
+                                </div>
+                            </div>
                         </div>
 
+                        <div class="divider my-4"></div>
+                        <div class="mb-2 profile-section-title">Personal</div>
                         <div class="mb-3">
                             <label class="form-label">Gender</label>
                             {{ form.gender }}
@@ -56,6 +67,8 @@
                             {{ form.age }}
                         </div>
 
+                        <div class="divider my-4"></div>
+                        <div class="mb-2 profile-section-title">Body metrics</div>
                         <div class="mb-3">
                             <label class="form-label">Height (cm)</label>
                             {{ form.height_cm }}
@@ -66,6 +79,8 @@
                             {{ form.weight_kg }}
                         </div>
 
+                        <div class="divider my-4"></div>
+                        <div class="mb-2 profile-section-title">Training</div>
                         <div class="mb-3">
                             <label class="form-label">Fitness level</label>
                             {{ form.fitness_level }}
@@ -86,6 +101,24 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('id_avatar');
+    const livePreview = document.getElementById('avatarLivePreview');
+    if (fileInput) {
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files && e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                if (livePreview) {
+                    livePreview.src = url;
+                    livePreview.style.display = 'block';
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
 
 

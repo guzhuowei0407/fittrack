@@ -216,10 +216,42 @@ def dashboard(request):
     total_workouts = WorkoutSession.objects.filter(user=request.user).count()
     total_exercises = ExerciseSet.objects.filter(workout__user=request.user).count()
     
+    # Build 7-day window anchored to the latest workout date (fallback: today)
+    from datetime import datetime as py_dt, time as py_time, timedelta as py_timedelta
+    latest_dt = WorkoutSession.objects.filter(user=request.user).order_by('-date').values_list('date', flat=True).first()
+    anchor_date = timezone.localtime(latest_dt).date() if latest_dt else timezone.localtime().date()
+    last_7_days = [anchor_date - py_timedelta(days=i) for i in range(6, -1, -1)]
+    # Initialize totals dict with zero for each day
+    daily_totals = {d: 0 for d in last_7_days}
+    # Fetch all workouts in that 7-day window for the user
+    start_dt = timezone.make_aware(py_dt.combine(last_7_days[0], py_time.min))
+    end_dt = timezone.make_aware(py_dt.combine(last_7_days[-1], py_time.max))
+    recent_range_workouts = WorkoutSession.objects.filter(
+        user=request.user,
+        date__range=(start_dt, end_dt),
+    ).order_by('date').prefetch_related('exercise_sets')
+    for w in recent_range_workouts:
+        day = timezone.localtime(w.date).date()
+        minutes = 0
+        if w.duration_minutes:
+            minutes = int(w.duration_minutes)
+        else:
+            sec_total = 0
+            for es in w.exercise_sets.all():
+                if es.duration_seconds:
+                    sec_total += es.duration_seconds
+            if sec_total:
+                minutes = round(sec_total / 60)
+        daily_totals[day] = daily_totals.get(day, 0) + minutes
+    chart_labels = [d.strftime('%m-%d') for d in last_7_days]
+    chart_values = [daily_totals.get(d, 0) for d in last_7_days]
+    
     context = {
         'recent_workouts': recent_workouts,
         'total_workouts': total_workouts,
         'total_exercises': total_exercises,
+        'weekly_chart_labels': chart_labels,
+        'weekly_chart_values': chart_values,
     }
     return render(request, 'dashboard.html', context)
 
