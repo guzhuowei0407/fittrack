@@ -1,12 +1,12 @@
-# Python 虚拟环境目录
+# Python virtual environment directory
 venv/
 
-# 编译的 Python 文件
+# Compiled Python files
 __pycache__/
 *.pyc
 *.pyd
 
-# Mac 系统文件
+# Mac system files
 .DS_Store
 
 # Local env and artifacts

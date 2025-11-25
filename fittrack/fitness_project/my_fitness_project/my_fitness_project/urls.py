@@ -18,9 +18,9 @@ Including another URLconf
 # my_fitness_project/urls.py
 
 from django.contrib import admin
-from django.urls import path, include # 确保导入了 include
+from django.urls import path, include # Make sure to import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('planner.urls')), # 添加这行，将根URL指向我们的app
+    path('', include('planner.urls')), # Add this line to route the root URL to our app
 ]

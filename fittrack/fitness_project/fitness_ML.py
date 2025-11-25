@@ -1,20 +1,20 @@
 import google.generativeai as genai
 
-# 1. 配置你的 API 密钥
-api_key = 'AIzaSyALFlkVqMr8OM7OULxHc7oox59b0xeEDBM'  # ⬅️ 在这里替换成你自己的API密钥
+# 1. Configure your API key
+api_key = 'AIzaSyALFlkVqMr8OM7OULxHc7oox59b0xeEDBM'  # Replace with your own API key
 genai.configure(api_key=api_key)
 
-# 2. 创建模型实例
-# 我们同样使用 'gemini-1.5-flash-latest'
+# 2. Create model instance
+# We use 'gemini-1.5-flash-latest'
 model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
-# 3. 调用模型生成内容
+# 3. Call the model to generate content
 try:
     prompt = "Explain how AI works in a few words"
     response = model.generate_content(prompt)
 
-    # 4. 打印结果
+    # 4. Print the result
     print(response.text)
 
 except Exception as e:
-    print(f"error: {e}")
+    print(f"Error: {e}")
