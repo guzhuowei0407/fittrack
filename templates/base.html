@@ -45,6 +45,16 @@
     {% endif %}
 
     <main class="content-container container py-5" style="color: white;">
+        {% if request.path != '/' and messages %}
+            <div class="mt-2">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 

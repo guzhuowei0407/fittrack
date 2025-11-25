@@ -15,7 +15,8 @@
                     <img src="https://img.youtube.com/vi/{{ item.youtube_id }}/maxresdefault.jpg" 
                          alt="{{ item.name }} video thumbnail" 
                          class="w-100 h-100" 
-                         style="object-fit: cover; border-radius: 0.375rem 0.375rem 0 0;">
+                         style="object-fit: cover; border-radius: 0.375rem 0.375rem 0 0;"
+                         onerror="this.onerror=null; this.src='https://img.youtube.com/vi/{{ item.youtube_id }}/hqdefault.jpg';">
                     <!-- Play Button Overlay -->
                     <div class="position-absolute top-50 start-50 translate-middle">
                         <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center" 

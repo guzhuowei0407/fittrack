@@ -151,6 +151,22 @@ p, span, div, td, th, li, ul, ol {
     color: #000 !important;
 }
 
+/* Alerts inside the login card: white background, red text for errors */
+.login-card .alert,
+.login-card .alert-danger,
+.login-card .alert-error {
+    background-color: #ffffff !important;
+    color: #dc3545 !important; /* Bootstrap danger red */
+    border: 1px solid #dc3545 !important;
+}
+
+/* Optional: success alerts inside login card use green text on white */
+.login-card .alert-success {
+    background-color: #ffffff !important;
+    color: #198754 !important; /* Bootstrap success green */
+    border: 1px solid #198754 !important;
+}
+
 /* Force all Bootstrap text utilities to be white */
 .text-muted {
     color: rgba(255, 255, 255, 0.75) !important;

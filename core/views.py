@@ -421,6 +421,7 @@ def login_submit(request):
     if user is not None:
         auth_login(request, user)
         return redirect('/profile/')
+    messages.error(request, 'Invalid username or password. Please try again.')
     return redirect('/')
 
 
@@ -514,6 +515,9 @@ def forgot_password(request):
             try:
                 send_mail(subject, body, sender, [email], fail_silently=False)
                 messages.success(request, 'Verification code sent to your email.')
+                # In development, if using console email backend, also show the code for convenience
+                if getattr(settings, 'EMAIL_BACKEND', '').endswith('console.EmailBackend'):
+                    messages.info(request, f'(Dev) Your code: {code}')
             except Exception:
                 messages.error(request, 'Failed to send email. Please contact support.')
             return redirect('reset_password_code')
