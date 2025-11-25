@@ -118,63 +118,162 @@
             </div>
         </div>
     </div>
-</div>
 
-<script>
-function viewWorkout(workoutId) {
-    // For now, just show an alert. Later you can implement a detailed view
-    alert('Workout details view coming soon! Workout ID: ' + workoutId);
-}
-</script>
+    <!-- Monthly Activity Line Chart -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Monthly Activity (Total minutes per day - Last 30 days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart" height="90"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script>
-(function() {
-    const labels = {{ weekly_chart_labels|safe }};
-    const dataValues = {{ weekly_chart_values|safe }};
-    const ctx = document.getElementById('weeklyChart');
-    if (!ctx) return;
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Minutes',
-                data: dataValues,
-                fill: false,
-                borderColor: '#22c55e',
-                backgroundColor: '#22c55e',
-                tension: 0.25,
-                pointRadius: 4,
-                pointBackgroundColor: '#22c55e',
-                pointBorderColor: '#1a1a1a'
-            }]
-        },
-        options: {
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    grid: { color: 'rgba(255,255,255,0.08)' },
-                    ticks: { color: '#fff' }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(255,255,255,0.08)' },
-                    ticks: { color: '#fff' },
-                    title: {
-                        display: true,
-                        text: 'Minutes',
-                        color: '#fff'
+    <!-- Chart Tabs for Multiple Views -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="height-tab" data-bs-toggle="tab" data-bs-target="#height-content" type="button" role="tab">Physical Stats</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Physical Stats Tab -->
+                        <div class="tab-pane fade show active" id="height-content" role="tabpanel">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h6>Current Height</h6>
+                                        <h3 class="text-info">
+                                            {% if profile.height_cm %}
+                                                {{ profile.height_cm|floatformat:1 }} cm
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h6>Current Weight</h6>
+                                        <h3 class="text-warning">
+                                            {% if profile.weight_kg %}
+                                                {{ profile.weight_kg|floatformat:1 }} kg
+                                            {% else %}
+                                                --
+                                            {% endif %}
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-card">
+                                        <h6>BMI</h6>
+                                        <h3 class="text-success" id="bmiDisplay">--</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <a href="{% url 'log_weight' %}" class="btn btn-primary w-100">Log Your Weight</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                (function() {
+                    // Helper: ensure labels/data arrays exist. If empty, return placeholders so Chart.js draws axes/grid.
+                    function ensureSeries(labels, values, defaultLen) {
+                        if (!Array.isArray(labels)) labels = [];
+                        if (!Array.isArray(values)) values = [];
+                        if (labels.length === 0) {
+                            labels = Array.from({ length: defaultLen }, function() { return ''; });
+                        }
+                        if (values.length === 0) {
+                            values = Array.from({ length: labels.length }, function() { return null; });
+                        }
+                        return { labels: labels, values: values };
                     }
-                }
-            }
-        }
-    });
-})();
-</script>
+
+                    // BMI display (use null when missing so template produces valid JS)
+                    const heightCm = {{ profile.height_cm|default:'null' }};
+                    const weightKg = {{ profile.weight_kg|default:'null' }};
+                    const bmiDisplayEl = document.getElementById('bmiDisplay');
+                    if (heightCm && weightKg) {
+                        const heightM = heightCm / 100;
+                        const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+                        if (bmiDisplayEl) bmiDisplayEl.textContent = bmi;
+                    } else {
+                        if (bmiDisplayEl) bmiDisplayEl.textContent = '--';
+                    }
+
+                    // Chart factory with consistent styling
+                    function createLineChart(ctxEl, labels, data, opts) {
+                        const ds = (opts && opts.dataset) || {};
+                        const defaultOptions = {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: { legend: { display: !!(opts && opts.showLegend) } },
+                            scales: {
+                                x: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#fff' } },
+                                y: { beginAtZero: !!(opts && opts.beginAtZero), grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#fff' } }
+                            }
+                        };
+
+                        return new Chart(ctxEl, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: ds.label || '',
+                                    data: data,
+                                    fill: !!ds.fill,
+                                    borderColor: ds.borderColor || '#22c55e',
+                                    backgroundColor: ds.backgroundColor || 'rgba(34,197,94,0.1)',
+                                    tension: ds.tension != null ? ds.tension : 0.25,
+                                    pointRadius: (data.filter(function(v){return v != null;}).length <= 1) ? (ds.singlePointRadius || 6) : (ds.pointRadius || 4),
+                                    pointBackgroundColor: ds.pointBackgroundColor || '#22c55e',
+                                    pointBorderColor: '#1a1a1a'
+                                }]
+                            },
+                            options: Object.assign({}, defaultOptions, opts && opts.options)
+                        });
+                    }
+
+                    // Weekly chart (ensure 7 slots)
+                    (function() {
+                        var weeklyLabels = {{ weekly_chart_labels|safe }};
+                        var weeklyValues = {{ weekly_chart_values|safe }};
+                        var s = ensureSeries(weeklyLabels, weeklyValues, 7);
+                        var weeklyCtx = document.getElementById('weeklyChart');
+                        if (weeklyCtx) {
+                            createLineChart(weeklyCtx, s.labels, s.values, { dataset: { label: 'Minutes', borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.08)', tension: 0.25, pointRadius: 4 }, options: { beginAtZero: true } });
+                        }
+                    })();
+
+                    // Monthly chart (ensure 30 slots)
+                    (function() {
+                        var monthlyLabels = {{ monthly_chart_labels|safe }};
+                        var monthlyValues = {{ monthly_chart_values|safe }};
+                        var s = ensureSeries(monthlyLabels, monthlyValues, 30);
+                        var monthlyCtx = document.getElementById('monthlyChart');
+                        if (monthlyCtx) {
+                            createLineChart(monthlyCtx, s.labels, s.values, { dataset: { label: 'Minutes', borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', tension: 0.4, pointRadius: 2 }, options: { beginAtZero: true } });
+                        }
+                    })();
+
+                    // Weight Trend removed per user request
+
+                })();
+                </script>
 <style>
 .card {
     background: rgba(0, 0, 0, 0.7) !important;
@@ -213,6 +312,77 @@ h1, h2, h3, h4, h5, h6, p, span {
 .card-body p {
     color: white !important;
 }
+
+/* Tab styling */
+.nav-tabs {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.nav-tabs .nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #fff !important;
+    border-bottom-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+.nav-tabs .nav-link.active {
+    color: #fff !important;
+    background-color: transparent !important;
+    border-bottom-color: #3b82f6 !important;
+}
+
+/* Stat card styling */
+.stat-card {
+    background: rgba(255, 255, 255, 0.05) !important;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 10px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-card h6 {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.stat-card h3 {
+    color: white !important;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* Card header tabs styling */
+.card-header-tabs {
+    /* less aggressive negative margin so the tab bar doesn't overlap card body contents */
+    margin: -12px -12px 0 -12px;
+    padding: 0 16px;
+}
+
+/* Ensure tab content has some top spacing so the active tab underline doesn't overlap the canvas */
+.tab-content {
+    padding-top: 1.25rem;
+}
+
+.card-header-tabs .nav-link {
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.card-header-tabs .nav-link.active {
+    border-bottom-color: #3b82f6 !important;
+    background-color: transparent !important;
+    color: #fff !important;
+}
+</style>
 </style>
 {% endblock %}
 

@@ -90,3 +90,16 @@ class PasswordResetCode(models.Model):
 
     def is_valid(self) -> bool:
         return self.used_at is None and timezone.now() < self.expires_at
+
+
+class WeightHistory(models.Model):
+    """Track user's weight changes over time"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="weight_history")
+    weight_kg = models.FloatField()
+    recorded_date = models.DateField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['recorded_date']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.weight_kg}kg on {self.recorded_date}"

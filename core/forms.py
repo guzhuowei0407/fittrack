@@ -3,6 +3,24 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.validators import EmailValidator
 from .models import UserProfile, WorkoutSession, ExerciseSet, Exercise
+from .models import WeightHistory
+
+
+class WeightHistoryForm(forms.ModelForm):
+    class Meta:
+        model = WeightHistory
+        fields = ['weight_kg']
+        widgets = {
+            'weight_kg': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.1',
+                'min': '0',
+                'placeholder': 'Weight in kg',
+            })
+        }
+        labels = {
+            'weight_kg': 'Weight (kg)'
+        }
 
 
 class UserProfileForm(forms.ModelForm):

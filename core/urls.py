@@ -18,6 +18,7 @@ urlpatterns = [
     path('workout/<int:workout_id>/', views.workout_detail, name='workout_detail'),
     path('workout/<int:workout_id>/delete/', views.workout_delete, name='workout_delete'),
     path('ai-planner/', views.ai_planner, name='ai_planner'),
+    path('log-weight/', views.log_weight, name='log_weight'),
 ]
 
 

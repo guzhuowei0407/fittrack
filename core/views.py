@@ -11,6 +11,7 @@ from .forms import (
     RegistrationForm,
     ForgotPasswordForm,
     ResetPasswordCodeForm,
+    WeightHistoryForm,
 )
 from django.views.decorators.cache import never_cache
 from .ai_planner import generate_fitness_plan_from_profile
@@ -196,6 +197,8 @@ def export_csv(request):
 @login_required
 def dashboard(request):
     from django.db.models import Sum
+    import json
+    
     # Get user's recent workouts
     recent_workouts = WorkoutSession.objects.filter(user=request.user).order_by('-date')[:10]
     
@@ -216,21 +219,21 @@ def dashboard(request):
     total_workouts = WorkoutSession.objects.filter(user=request.user).count()
     total_exercises = ExerciseSet.objects.filter(workout__user=request.user).count()
     
-    # Build 7-day window anchored to the latest workout date (fallback: today)
+    # Build 7-day, 30-day window anchored to the latest workout date (fallback: today)
     from datetime import datetime as py_dt, time as py_time, timedelta as py_timedelta
     latest_dt = WorkoutSession.objects.filter(user=request.user).order_by('-date').values_list('date', flat=True).first()
     anchor_date = timezone.localtime(latest_dt).date() if latest_dt else timezone.localtime().date()
+    
+    # 7-day chart data
     last_7_days = [anchor_date - py_timedelta(days=i) for i in range(6, -1, -1)]
-    # Initialize totals dict with zero for each day
-    daily_totals = {d: 0 for d in last_7_days}
-    # Fetch all workouts in that 7-day window for the user
-    start_dt = timezone.make_aware(py_dt.combine(last_7_days[0], py_time.min))
-    end_dt = timezone.make_aware(py_dt.combine(last_7_days[-1], py_time.max))
-    recent_range_workouts = WorkoutSession.objects.filter(
+    daily_totals_7 = {d: 0 for d in last_7_days}
+    start_dt_7 = timezone.make_aware(py_dt.combine(last_7_days[0], py_time.min))
+    end_dt_7 = timezone.make_aware(py_dt.combine(last_7_days[-1], py_time.max))
+    recent_range_workouts_7 = WorkoutSession.objects.filter(
         user=request.user,
-        date__range=(start_dt, end_dt),
+        date__range=(start_dt_7, end_dt_7),
     ).order_by('date').prefetch_related('exercise_sets')
-    for w in recent_range_workouts:
+    for w in recent_range_workouts_7:
         day = timezone.localtime(w.date).date()
         minutes = 0
         if w.duration_minutes:
@@ -242,16 +245,77 @@ def dashboard(request):
                     sec_total += es.duration_seconds
             if sec_total:
                 minutes = round(sec_total / 60)
-        daily_totals[day] = daily_totals.get(day, 0) + minutes
-    chart_labels = [d.strftime('%m-%d') for d in last_7_days]
-    chart_values = [daily_totals.get(d, 0) for d in last_7_days]
+        daily_totals_7[day] = daily_totals_7.get(day, 0) + minutes
+    
+    chart_labels_7 = [d.strftime('%m-%d') for d in last_7_days]
+    chart_values_7 = [daily_totals_7.get(d, 0) for d in last_7_days]
+    
+    # 30-day chart data
+    last_30_days = [anchor_date - py_timedelta(days=i) for i in range(29, -1, -1)]
+    daily_totals_30 = {d: 0 for d in last_30_days}
+    start_dt_30 = timezone.make_aware(py_dt.combine(last_30_days[0], py_time.min))
+    end_dt_30 = timezone.make_aware(py_dt.combine(last_30_days[-1], py_time.max))
+    recent_range_workouts_30 = WorkoutSession.objects.filter(
+        user=request.user,
+        date__range=(start_dt_30, end_dt_30),
+    ).order_by('date').prefetch_related('exercise_sets')
+    for w in recent_range_workouts_30:
+        day = timezone.localtime(w.date).date()
+        minutes = 0
+        if w.duration_minutes:
+            minutes = int(w.duration_minutes)
+        else:
+            sec_total = 0
+            for es in w.exercise_sets.all():
+                if es.duration_seconds:
+                    sec_total += es.duration_seconds
+            if sec_total:
+                minutes = round(sec_total / 60)
+        daily_totals_30[day] = daily_totals_30.get(day, 0) + minutes
+    
+    chart_labels_30 = [d.strftime('%m-%d') for d in last_30_days]
+    chart_values_30 = [daily_totals_30.get(d, 0) for d in last_30_days]
+    
+    # Weight history data (with timestamps from profile history or from weight entries)
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    weight_history = []
+    weight_labels = []
+    
+    # Get all workouts with dates for weight tracking
+    all_workouts = WorkoutSession.objects.filter(user=request.user).order_by('date')
+    if profile.weight_kg and all_workouts.exists():
+        # For now, use current weight as the reference
+        # In future, you can create a WeightHistory model to track weight changes
+        current_weight = profile.weight_kg
+        weight_history = [current_weight]
+        weight_labels = ['Current']
+    
+    # Get weight history from WeightHistory model
+    from .models import WeightHistory
+    weight_records = WeightHistory.objects.filter(user=request.user).order_by('recorded_date')
+    
+    if weight_records.exists():
+        weight_history = [round(w.weight_kg, 1) for w in weight_records]
+        weight_labels = [w.recorded_date.strftime('%m-%d') for w in weight_records]
+    elif profile.weight_kg:
+        # If no history, create initial data point
+        weight_history = [profile.weight_kg]
+        weight_labels = ['Today']
+    else:
+        weight_history = []
+        weight_labels = []
     
     context = {
         'recent_workouts': recent_workouts,
         'total_workouts': total_workouts,
         'total_exercises': total_exercises,
-        'weekly_chart_labels': chart_labels,
-        'weekly_chart_values': chart_values,
+        'weekly_chart_labels': chart_labels_7,
+        'weekly_chart_values': chart_values_7,
+        'monthly_chart_labels': chart_labels_30,
+        'monthly_chart_values': chart_values_30,
+        'weight_labels': json.dumps(weight_labels),
+        'weight_values': json.dumps(weight_history),
+        'profile': profile,
     }
     return render(request, 'dashboard.html', context)
 
@@ -488,3 +552,30 @@ def reset_password_code(request):
     else:
         form = ResetPasswordCodeForm()
     return render(request, 'reset_password_code.html', {'form': form})
+
+
+@login_required
+def log_weight(request):
+    """Log user's weight for tracking"""
+    from .models import WeightHistory
+    
+    if request.method == 'POST':
+        form = WeightHistoryForm(request.POST)
+        if form.is_valid():
+            weight_entry = form.save(commit=False)
+            weight_entry.user = request.user
+            weight_entry.save()
+            
+            # Also update user profile weight
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            profile.weight_kg = weight_entry.weight_kg
+            profile.save()
+            
+            messages.success(request, f'Weight logged successfully: {weight_entry.weight_kg} kg')
+            return redirect('dashboard')
+    else:
+        # Pre-fill with current weight
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        form = WeightHistoryForm(initial={'weight_kg': profile.weight_kg})
+    
+    return render(request, 'log_weight.html', {'form': form})
